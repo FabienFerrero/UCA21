@@ -7,6 +7,15 @@ Author: Fabien Ferrero and Trinh Le Huy
 
 This board was developed for education to support courses on embedded software, digital and analog electronic, telecommunication, signal processing and IoT.
 
+# What's new
+- Lithium battery charger
+- Accelemeter sensor
+- Temp/Humidity sensor
+- Light sensor
+- 21 RGB Leds
+- Optimized sleep mode to 5uA
+- VSWR meter
+
 <img src="https://github.com/FabienFerrero/UCA_Education_Board/blob/master/Doc/Pictures/board.png">
 
 The board is fabricated by RFThings.
