@@ -8,10 +8,16 @@ Resources:
 Uses Wire.h for i2c operation
 
 Distributed as-is; no warranty is given.
+
+Use kxtj3-1057 accelerometer
+
+Objective : This code will :
+    * plot on the serial port the X,Y and Z value of the accelerometer
+    * use the LED to illustrate the X value from accelerometer
 ******************************************************************************/
 
 
-
+#define DEBUG   // If DEBUG, plot on the serial port the accelerometer value
 
 #include <FastLED.h> // http://librarymanager/All#FASTLED
 #include "kxtj3-1057.h" // http://librarymanager/All#kxtj3-1057
@@ -41,7 +47,7 @@ CRGB leds[NUM_LEDS];
 #define BRIGHTNESS          16
 #define FRAMES_PER_SECOND  120
 
-//#define DEBUG          
+         
 
 uint8_t gHue = 0; // rotating "base color" used by many of the patterns
 
@@ -91,15 +97,21 @@ void loop()
 
   #ifdef DEBUG
   Serial.print(" Acceleration X RAW = ");
-  Serial.println(dataHighres);
-  #endif
+  Serial.print(dataHighres);
+    #endif
   int offset = dataHighres/1550; 
 if( myIMU.readRegisterInt16( &dataHighres, KXTJ3_OUT_Y_L ) == 0 ){}
   #ifdef DEBUG
   Serial.print(" Acceleration Y RAW = ");
-  Serial.println(dataHighres);
+  Serial.print(dataHighres);
   #endif
   int color = dataHighres/3000;
+
+ if( myIMU.readRegisterInt16( &dataHighres, KXTJ3_OUT_Z_L ) == 0 ){}
+  #ifdef DEBUG
+  Serial.print(" Acceleration Z RAW = ");
+  Serial.println(dataHighres);
+  #endif 
   
   myIMU.standby( true );
 
@@ -116,8 +128,8 @@ if( myIMU.readRegisterInt16( &dataHighres, KXTJ3_OUT_Y_L ) == 0 ){}
   // insert a delay to keep the framerate modest
   FastLED.delay(1000/FRAMES_PER_SECOND); 
    // do some periodic updates
-  EVERY_N_MILLISECONDS( 20 ) { gHue=gHue+color; } // slowly cycle the "base color" through the rainbow 
+  EVERY_N_MILLISECONDS( 50 ) { gHue=gHue+color; } // slowly cycle the "base color" through the rainbow 
 
-  delay(20);
+  delay(100);
 
 }
