@@ -203,7 +203,7 @@ void loop() {
 //    printError(error);
 //  }
  
-uint8_t lux_temp = map(lux, 0,50,170,0); // Map value from luminosity sensor to LED
+uint8_t lux_temp = map(lux, 0,300,170,0); // Map value from luminosity sensor to LED from 170 to 0
 //Serial.println(lux_temp);
  // FastLED's built-in rainbow generator
   fill_solid( leds, NUM_LEDS, ColorFromPalette(RainbowColors_p,lux_temp,BRIGHTNESS, LINEARBLEND));
@@ -249,26 +249,3 @@ void printError(byte error) {
       Serial.println("unknown error");
   }
 }
-
-const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
-{
-    CRGB::DarkBlue,
-    CRGB::Blue, 
-    CRGB::SkyBlue,
-    CRGB::LightBlue,
-    
-    CRGB::Red,
-    CRGB::Gray,
-    CRGB::Blue,
-    CRGB::Black,
-    
-    CRGB::Red,
-    CRGB::Red,
-    CRGB::Gray,
-    CRGB::Gray,
-    
-    CRGB::Blue,
-    CRGB::Blue,
-    CRGB::Black,
-    CRGB::Black
-};
