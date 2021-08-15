@@ -12,7 +12,7 @@ Distributed as-is; no warranty is given.
 Use LTR303 light sensor
 
 Objective : This code will :
-    * plot on the serial port the 2 light value of the accelerometer
+    * plot on the serial port the 2 light value of the accelerometer +  luminosity
     * use the LED to illustrate the luminosity from accelerometer
 ******************************************************************************/
 
@@ -20,8 +20,21 @@ Objective : This code will :
 // Your sketch must #include this library, and the Wire library
 // (Wire is a standard library included with Arduino):
 
+#include <FastLED.h> // http://librarymanager/All#FASTLED
 #include <LTR303.h>
 #include <Wire.h>
+
+#define LED_PIN     4
+#define NUM_LEDS    21
+#define BRIGHTNESS  64
+#define LED_TYPE    WS2811
+#define COLOR_ORDER GRB
+CRGB leds[NUM_LEDS];
+CRGBPalette16 currentPalette;
+TBlendType    currentBlending;
+
+#define UPDATES_PER_SECOND 100
+
 
 // Create an LTR303 object, here called "light":
 
@@ -33,7 +46,13 @@ unsigned char gain;     // Gain setting, values = 0-7
 unsigned char integrationTime;  // Integration ("shutter") time in milliseconds
 unsigned char measurementRate;  // Interval between DATA_REGISTERS update
 
+
+  
+
+
+
 void setup() {
+  delay( 3000 ); // power-up safety delay
   // Initialize the Serial port:
   
   Serial.begin(115200);
@@ -113,6 +132,15 @@ void setup() {
   // The sensor will now gather light during the integration time.
   // After the specified time, you can retrieve the result from the sensor.
   // Once a measurement occurs, another integration period will start.
+
+// Setup LED
+
+ FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+ FastLED.setBrightness(  BRIGHTNESS );
+    
+ currentPalette = RainbowColors_p;
+ currentBlending = LINEARBLEND;
+
 }
 
 void loop() {
@@ -135,6 +163,8 @@ void loop() {
   // Retrieve the data from the device:
 
   unsigned int data0, data1;
+  double lux;    // Resulting lux value
+  boolean good;  // True if neither sensor is saturated
   
   if (light.getData(data0,data1)) {
     // getData() returned true, communication was successful
@@ -152,8 +182,7 @@ void loop() {
     // saturated (too much light). If this happens, you can
     // reduce the integration time and/or gain.
   
-    double lux;    // Resulting lux value
-    boolean good;  // True if neither sensor is saturated
+    
     
     // Perform lux calculation:
 
@@ -171,6 +200,22 @@ void loop() {
     byte error = light.getError();
     printError(error);
   }
+ 
+uint8_t lux_temp = map(lux, 0,50,170,0); // Map value from luminosity sensor to LED
+Serial.println(lux_temp);
+ // FastLED's built-in rainbow generator
+  fill_solid( leds, NUM_LEDS, ColorFromPalette(RainbowColors_p,lux_temp,BRIGHTNESS, LINEARBLEND));
+//uint8_t colorIndex = 0;
+//  for( int i = 0; i < NUM_LEDS; i++) {
+//        leds[i] = ColorFromPalette( currentPalette, colorIndex, BRIGHTNESS, currentBlending);
+//        colorIndex += 3;
+//    }
+  
+  
+// send the 'leds' array out to the actual LED strip
+  FastLED.show();
+  FastLED.delay(1000 / UPDATES_PER_SECOND);
+
 }
 
 void printError(byte error) {
@@ -201,3 +246,26 @@ void printError(byte error) {
       Serial.println("unknown error");
   }
 }
+
+const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
+{
+    CRGB::DarkBlue,
+    CRGB::Blue, 
+    CRGB::SkyBlue,
+    CRGB::LightBlue,
+    
+    CRGB::Red,
+    CRGB::Gray,
+    CRGB::Blue,
+    CRGB::Black,
+    
+    CRGB::Red,
+    CRGB::Red,
+    CRGB::Gray,
+    CRGB::Gray,
+    
+    CRGB::Blue,
+    CRGB::Blue,
+    CRGB::Black,
+    CRGB::Black
+};

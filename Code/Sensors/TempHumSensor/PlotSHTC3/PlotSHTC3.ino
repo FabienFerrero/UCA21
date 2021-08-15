@@ -20,17 +20,19 @@ void setup() {
   Wire.begin();
   s.begin(true);
 
+  Serial.println("Temperature:,Humidity:");   // Plot labels
+
 }
 
 
 void loop() {
 
     s.sample();
-    Serial.print(F("[SHTC3] T:"));
+   // Serial.print(F("[SHTC3] T:"));
     Serial.print(s.readTempC());
-    Serial.print(F(" Cº  /   H: "));
-    Serial.print(s.readHumidity());
-    Serial.println(F(" %"));
+    Serial.print(F(" "));
+    Serial.println(s.readHumidity());
+    
 
 
 uint8_t temp = map(s.readTempC(), 20,35,170,0); // Map value from luminosity sensor to LED
@@ -45,5 +47,5 @@ uint8_t temp = map(s.readTempC(), 20,35,170,0); // Map value from luminosity sen
   FastLED.show();
   FastLED.delay(1000 / UPDATES_PER_SECOND);
     
-    delay(2000);
+    delay(1000);
 }

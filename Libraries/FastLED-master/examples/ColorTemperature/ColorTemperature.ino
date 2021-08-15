@@ -1,14 +1,14 @@
 #include <FastLED.h>
 
-#define LED_PIN     3
+#define LED_PIN     4
 
 // Information about the LED strip itself
-#define NUM_LEDS    60
-#define CHIPSET     WS2811
+#define NUM_LEDS    25
+#define CHIPSET     WS2812
 #define COLOR_ORDER GRB
 CRGB leds[NUM_LEDS];
 
-#define BRIGHTNESS  128
+#define BRIGHTNESS  32
 
 
 // FastLED v2.1 provides two color-management controls:
@@ -82,4 +82,3 @@ void setup() {
   FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalSMD5050 );
   FastLED.setBrightness( BRIGHTNESS );
 }
-

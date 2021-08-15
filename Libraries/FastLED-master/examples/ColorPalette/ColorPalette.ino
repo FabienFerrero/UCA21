@@ -1,7 +1,7 @@
 #include <FastLED.h>
 
-#define LED_PIN     5
-#define NUM_LEDS    50
+#define LED_PIN     4
+#define NUM_LEDS    21
 #define BRIGHTNESS  64
 #define LED_TYPE    WS2811
 #define COLOR_ORDER GRB
@@ -47,10 +47,10 @@ void setup() {
 
 void loop()
 {
-    ChangePalettePeriodically();
+    //ChangePalettePeriodically();
     
     static uint8_t startIndex = 0;
-    startIndex = startIndex + 1; /* motion speed */
+    //startIndex = startIndex + 1; /* motion speed */
     
     FillLEDsFromPaletteColors( startIndex);
     
@@ -60,7 +60,7 @@ void loop()
 
 void FillLEDsFromPaletteColors( uint8_t colorIndex)
 {
-    uint8_t brightness = 255;
+    uint8_t brightness = 32;
     
     for( int i = 0; i < NUM_LEDS; i++) {
         leds[i] = ColorFromPalette( currentPalette, colorIndex, brightness, currentBlending);
