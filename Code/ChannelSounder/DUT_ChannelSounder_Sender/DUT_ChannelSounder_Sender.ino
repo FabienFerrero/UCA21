@@ -36,7 +36,7 @@ void setup() {
   LoRa.setSignalBandwidth(SignalBandwidth);
   LoRa.setCodingRate4(codingRateDenominator);
   LoRa.setPreambleLength(preambleLength);
-  LoRa.setTxPower(Pow, 1);
+  LoRa.setTxPower(Pow, 14);
    
   delay(2000);
   
