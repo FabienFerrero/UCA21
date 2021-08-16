@@ -8,7 +8,7 @@ Author: Fabien Ferrero and Trinh Le Huy
 This board was developed for education to support courses on embedded software, digital and analog electronic, telecommunication, signal processing and IoT.
 
 # What's new
-- Lithium battery charger
+- Lithium battery charger + JST-PH 2pin and 3pin connector
 - Accelemeter sensor
 - Temp/Humidity sensor
 - Light sensor
