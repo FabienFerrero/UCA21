@@ -249,6 +249,9 @@ if (BRIGHTNESS > 150) {
     if(index > (buff-1)){
 
     average_RSSI = 0;
+    
+    
+    // Check for Min Max RSSI value
     max_RSSI=-120;
     min_RSSI=-20;
 
@@ -261,11 +264,16 @@ if (BRIGHTNESS > 150) {
       min_RSSI = RSSI_array[i];
       }   
     }
+
+    // If RSSI difference is not at least 5dB, increase it to 5dB
+    if (max_RSSI-min_RSSI <=10){
+      min_RSSI = max_RSSI-10;
+      }
+    
     for( int i=0; i<=index; i++ ) {
     average_RSSI = average_RSSI + RSSI_array[i];
     spectrum_array[i] = map(RSSI_array[i], min_RSSI,max_RSSI,170,0); // Map value from luminosity sensor to LED
-   
-      }
+         }
     average_RSSI = average_RSSI / (index+1);
     
 
