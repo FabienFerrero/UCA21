@@ -1,5 +1,5 @@
-#include <Arduino.h>
-#include "SHTC3.h"
+#include <Wire.h>
+#include "SHTSensor.h" // http://librarymanager/All#arduino_shtc3
 #include <FastLED.h> // http://librarymanager/All#FASTLED
 
 #define LED_PIN     4
@@ -13,27 +13,28 @@ TBlendType    currentBlending;
 
 #define UPDATES_PER_SECOND 100
 
-SHTC3 s(Wire);
+SHTSensor sht;
 
 void setup() {
   Serial.begin(115200);
   Wire.begin();
-  s.begin(true);
+  sht.init();
+  sht.setAccuracy(SHTSensor::SHT_ACCURACY_MEDIUM); // only supported by SHT3x
 
 }
 
 
 void loop() {
 
-    s.sample();
+     sht.readSample();
     Serial.print(F("[SHTC3] T:"));
-    Serial.print(s.readTempC());
+    Serial.print(sht.getTemperature());
     Serial.print(F(" Cº  /   H: "));
-    Serial.print(s.readHumidity());
+    Serial.print(sht.getHumidity());
     Serial.println(F(" %"));
 
 
-uint8_t temp = map(s.readTempC(), 20,35,170,0); // Map value from luminosity sensor to LED
+uint8_t temp = map(sht.getTemperature(), 20,35,170,0); // Map value from luminosity sensor to LED
 
  // FastLED's built-in rainbow generator
   fill_solid( leds, NUM_LEDS, ColorFromPalette(RainbowColors_p,temp,BRIGHTNESS, LINEARBLEND));
