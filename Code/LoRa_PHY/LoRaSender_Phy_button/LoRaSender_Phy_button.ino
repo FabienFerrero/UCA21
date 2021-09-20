@@ -82,7 +82,7 @@ void loop() {
 
    if (digitalRead(3)==LOW) { 
     // Fill the number of white LED depending on RSSI
-  fill_solid( leds, LED, CRGB(BRIGHTNESS,0,BRIGHTNESS));
+  fill_solid( leds, NUM_LEDS, CRGB(BRIGHTNESS,0,BRIGHTNESS));
   FastLED.show(); 
   delay(1000);
     i++;
@@ -93,7 +93,7 @@ void loop() {
 
     if (digitalRead(2)==LOW) { 
     // Fill the number of white LED depending on RSSI
-  fill_solid( leds, LED, CRGB(0,BRIGHTNESS,BRIGHTNESS));
+  fill_solid( leds, NUM_LEDS, CRGB(0,BRIGHTNESS,BRIGHTNESS));
   FastLED.show();
   delay(1000);
     j++;
