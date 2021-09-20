@@ -30,7 +30,7 @@
 #include <SPI.h>
 #include "LowPower.h"
 //Sensors librairies
-#include <SI7021.h>
+#include <LTR303.h>
 
 
 #define debugSerial Serial
@@ -45,21 +45,28 @@
 #define LAPIN A3 // PIN with Light sensor analog output 
 #define LPPIN 5 // PIN with Light power input
 
-SI7021 sensor;
+// Create an LTR303 object, here called "light":
 
-// LoRaWAN end-device address (DevAddr)
-static const u4_t DEVADDR = 0x00000000;
+LTR303 lightsensor;
+
+// Global variables:
+
+unsigned char gain;     // Gain setting, values = 0-7 
+unsigned char integrationTime;  // Integration ("shutter") time in milliseconds
+unsigned char measurementRate;  // Interval between DATA_REGISTERS update
+
+static const u4_t DEVADDR = 0x260B6802;
 
 // LoRaWAN NwkSKey, network session key
 // This is the default Semtech key, which is used by the early prototype TTN
 // network.
-static const PROGMEM u1_t NWKSKEY[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+static const PROGMEM u1_t NWKSKEY[16] = {  0x18, 0x9A, 0x1C, 0x5B, 0xA4, 0x5D, 0x09, 0x69, 0x1F, 0x2B, 0x0E, 0xEB, 0x6A, 0x7F, 0x99, 0x49 };
 
 
 // LoRaWAN AppSKey, application session key
 // This is the default Semtech key, which is used by the early prototype TTN
 // network.
-static const u1_t PROGMEM APPSKEY[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+static const u1_t PROGMEM APPSKEY[16] = {  0x43, 0xB4, 0x29, 0x8D, 0x3B, 0xE3, 0xD8, 0x42, 0xA1, 0x18, 0xFC, 0x8C, 0xA8, 0xC0, 0x79, 0x6C };
 
 
 // These callbacks are only used in over-the-air activation, so they are
@@ -78,7 +85,7 @@ static float temp = 0.0;
 static float pressure = 0.0;
 static float humidity = 0.0;
 static float batvalue;
-static float light;
+static float light = 0;
 
 
 
@@ -185,16 +192,32 @@ long readVcc() {
 }
 
 // Read Light function for TEMT6000
-float readLight() { 
-        float result;
-        // Light sensor Voltage
-      digitalWrite(LPPIN, HIGH); // Power the sensor
-      delay(1);
-      int sensorValue = analogRead(LAPIN);
-        // Convert the analog reading (which goes from 0 - 1023) to a voltage (0 - 3.3V):
-        float voltage = sensorValue * (batvalue / 1023.0)/100; // Batvalue is in tens of mV, so the result has to be divided by 100
-      result = voltage*200; // multiply by 2000 to have Lx
-      digitalWrite(LPPIN, LOW); // switch off the sensor
+double readLight() { 
+        double result;
+        unsigned int data0, data1;
+         boolean good;  // True if neither sensor is saturated
+
+    if (lightsensor.getData(data0,data1)) {
+    // getData() returned true, communication was successful
+    
+    Serial.print(data1);
+    Serial.print(" ");
+    Serial.print(data0);
+    Serial.print(" ");
+  
+    // To calculate lux, pass all your settings and readings
+    // to the getLux() function.
+    
+    // The getLux() function will return 1 if the calculation
+    // was successful, or 0 if one or both of the sensors was
+    // saturated (too much light). If this happens, you can
+    // reduce the integration time and/or gain.
+  
+  }  
+    
+    // Perform lux calculation:
+
+    good = lightsensor.getLux(gain,integrationTime,data0,data1,result);        
         return result;
 }
 
@@ -204,9 +227,9 @@ void updateEnvParameters()
 {
    
        temp = 20.0;
-       int temperature = sensor.getCelsiusHundredths();
+       int temperature = 20;
        temp = temperature / 100;
-       humidity = sensor.getHumidityPercent();
+       humidity = 50;
        light = readLight();
        batvalue = (int)(readVcc()/10);  // readVCC returns in tens of mVolt 
           
