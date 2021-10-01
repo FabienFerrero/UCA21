@@ -4,9 +4,11 @@ In \libraries\arduino-lmic\project_config\lmic_project_config.h
 
 Add  `#define LMIC_ENABLE_arbitrary_clock_error 1`
 
-In your loraWan code, add 
-
-'   // Make LMIC start its RX windows a bit earlier, to compensate for an
+In your loraWan code, add after LMIC_reset in setup() :
+    LMIC_setClockError(MAX_CLOCK_ERROR * 2 / 100);'
+    
+    
+    // Make LMIC start its RX windows a bit earlier, to compensate for an
 // inaccurate clock.
 //
 // Beware that a specific value may work for a slow data rate, but not
@@ -16,5 +18,3 @@ In your loraWan code, add
 // even needed 5% of the maximum error. For corrections exceeding 0.4%
 // (0.4 / 100) this also needs LMIC_ENABLE_arbitrary_clock_error; see
 // https://github.com/mcci-catena/arduino-LMIC/blob/master/README.md
-
-    LMIC_setClockError(MAX_CLOCK_ERROR * 2 / 100);'
