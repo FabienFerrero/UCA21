@@ -5,7 +5,7 @@ In \libraries\arduino-lmic\project_config\lmic_project_config.h
 Add  `#define LMIC_ENABLE_arbitrary_clock_error 1`
 
 In your loraWan code, add after LMIC_reset in setup() :
-   'LMIC_setClockError(MAX_CLOCK_ERROR * 2 / 100);'
+` LMIC_setClockError(MAX_CLOCK_ERROR * 2 / 100);`
     
     
 // Make LMIC start its RX windows a bit earlier, to compensate for an
