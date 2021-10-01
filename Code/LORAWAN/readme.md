@@ -8,7 +8,7 @@ In your loraWan code, add after LMIC_reset in setup() :
    'LMIC_setClockError(MAX_CLOCK_ERROR * 2 / 100);'
     
     
-    // Make LMIC start its RX windows a bit earlier, to compensate for an
+// Make LMIC start its RX windows a bit earlier, to compensate for an
 // inaccurate clock.
 //
 // Beware that a specific value may work for a slow data rate, but not
