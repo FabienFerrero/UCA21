@@ -1,4 +1,4 @@
-* LoRaWAN MAC
+! LoRaWAN MAC
 
 In \libraries\arduino-lmic\project_config\lmic_project_config.h
 
