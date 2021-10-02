@@ -29,7 +29,7 @@ Objective : This code will :
 // Enable Serial debbug on Serial UART to see registers wrote
 #define KXTJ3_DEBUG Serial
 
-#include "kxtj3-1057.h"
+
 #include "Wire.h"
 
 float   sampleRate = 6.25;  // HZ - Samples per second - 0.781, 1.563, 3.125, 6.25, 12.5, 25, 50, 100, 200, 400, 800, 1600Hz
