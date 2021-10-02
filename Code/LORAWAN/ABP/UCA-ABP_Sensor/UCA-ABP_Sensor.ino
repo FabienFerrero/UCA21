@@ -30,43 +30,34 @@
 #include <SPI.h>
 #include "LowPower.h"
 //Sensors librairies
+#include <Wire.h>
 #include <LTR303.h>
-
-
-#define debugSerial Serial
-#define SHOW_DEBUGINFO
-#define debugPrintLn(...) { if (debugSerial) debugSerial.println(__VA_ARGS__); }
-#define debugPrint(...) { if (debugSerial) debugSerial.print(__VA_ARGS__); }
-
-
-
-
-//Define sensor PIN
-#define LAPIN A3 // PIN with Light sensor analog output 
-#define LPPIN 5 // PIN with Light power input
+#include "kxtj3-1057.h" // http://librarymanager/All#kxtj3-1057
+#include "SHTC3.h"
 
 // Create an LTR303 object, here called "light":
 
 LTR303 lightsensor;
+KXTJ3 myIMU(0x0E); // Address can be 0x0E or 0x0F
+SHTC3 s(Wire);
+
+float   sampleRate = 6.25;  // HZ - Samples per second - 0.781, 1.563, 3.125, 6.25, 12.5, 25, 50, 100, 200, 400, 800, 1600Hz
+uint8_t accelRange = 2;     // Accelerometer range = 2, 4, 8, 16g
 
 // Global variables:
 
-unsigned char gain;     // Gain setting, values = 0-7 
-unsigned char integrationTime;  // Integration ("shutter") time in milliseconds
-unsigned char measurementRate;  // Interval between DATA_REGISTERS update
-
-static const u4_t DEVADDR = 0x260B6802;
+static const u4_t DEVADDR = 0x260B78D1;
 
 // LoRaWAN NwkSKey, network session key
 // This is the default Semtech key, which is used by the early prototype TTN
 // network.
-static const PROGMEM u1_t NWKSKEY[16] = {  0x18, 0x9A, 0x1C, 0x5B, 0xA4, 0x5D, 0x09, 0x69, 0x1F, 0x2B, 0x0E, 0xEB, 0x6A, 0x7F, 0x99, 0x49 };
+static const PROGMEM u1_t NWKSKEY[16] = { 0xB9, 0xB9, 0x29, 0x49, 0x94, 0xE2, 0xBF, 0x1C, 0xD0, 0x2D, 0xD0, 0xB2, 0xE3, 0x63, 0x06, 0xC9 };
 
 
 // LoRaWAN AppSKey, application session key
 // This is the default Semtech key, which is used by the early prototype TTN
 // network.
-static const u1_t PROGMEM APPSKEY[16] = {  0x43, 0xB4, 0x29, 0x8D, 0x3B, 0xE3, 0xD8, 0x42, 0xA1, 0x18, 0xFC, 0x8C, 0xA8, 0xC0, 0x79, 0x6C };
+static const u1_t PROGMEM APPSKEY[16] = {  0xAE, 0xB1, 0xC4, 0x7F, 0x29, 0xFB, 0xD2, 0xC7, 0xD1, 0x58, 0xCA, 0x5A, 0x67, 0x40, 0x91, 0x60};
 
 
 // These callbacks are only used in over-the-air activation, so they are
@@ -79,16 +70,6 @@ void os_getDevKey (u1_t* buf) { }
 static osjob_t sendjob;
 
 
-
-// global enviromental parameters (exemples)
-static float temp = 0.0;
-static float pressure = 0.0;
-static float humidity = 0.0;
-static float batvalue;
-static float light = 0;
-
-
-
 // Schedule TX every this many seconds (might become longer due to duty
 // cycle limitations).
 const unsigned TX_INTERVAL = 60;
@@ -98,10 +79,8 @@ const lmic_pinmap lmic_pins = {
     .nss = 10,
     .rxtx = LMIC_UNUSED_PIN,
     .rst = 8,
-    .dio = {3, 7, 6},
+    .dio = {6, 6, 6},
 };
-
-
 
 // ---------------------------------------------------------------------------------
 // Functions
@@ -123,20 +102,12 @@ void do_sleep(unsigned int sleepyTime) {
   unsigned int twos = ((sleepyTime % 8) % 4) / 2;
   unsigned int ones = ((sleepyTime % 8) % 4) % 2;
 
-        #ifdef SHOW_DEBUGINFO
-          debugPrint(F("Sleeping for "));
-          debugPrint(sleepyTime);
-          debugPrint(F(" seconds = "));
-          debugPrint(eights);
-          debugPrint(F(" x 8 + "));
-          debugPrint(fours);
-          debugPrint(F(" x 4 + "));
-          debugPrint(twos);
-          debugPrint(F(" x 2 + "));
-          debugPrintLn(ones);
-          delay(500); //Wait for serial to complete
-        #endif
-        
+        Serial.print("Sleep during ");
+        Serial.print(sleepyTime);
+        Serial.println("sec");
+        delay(50);
+
+        Serial.end();
         
           for ( int x = 0; x < eights; x++) {
             // put the processor to sleep for 8 seconds
@@ -175,6 +146,8 @@ void do_sleep(unsigned int sleepyTime) {
               sei();
           }
           addMillis(sleepyTime * 1000);
+
+          Serial.begin(115200);
 }
 
 // ReadVcc function to read MCU Voltage
@@ -191,60 +164,19 @@ long readVcc() {
       return result;
 }
 
-// Read Light function for TEMT6000
+// Read Light function for 
 double readLight() { 
         double result;
         unsigned int data0, data1;
-         boolean good;  // True if neither sensor is saturated
-
-    if (lightsensor.getData(data0,data1)) {
-    // getData() returned true, communication was successful
-    
-    Serial.print(data1);
-    Serial.print(" ");
-    Serial.print(data0);
-    Serial.print(" ");
-  
-    // To calculate lux, pass all your settings and readings
-    // to the getLux() function.
-    
-    // The getLux() function will return 1 if the calculation
-    // was successful, or 0 if one or both of the sensors was
-    // saturated (too much light). If this happens, you can
-    // reduce the integration time and/or gain.
-  
-  }  
+        lightsensor.getData(data0,data1);
     
     // Perform lux calculation:
 
-    good = lightsensor.getLux(gain,integrationTime,data0,data1,result);        
-        return result;
+    lightsensor.getLux(0,1,data0,data1,result);  
+            return result;
 }
 
-// Function to update sensor values
 
-void updateEnvParameters()
-{
-   
-       temp = 20.0;
-       int temperature = 20;
-       temp = temperature / 100;
-       humidity = 50;
-       light = readLight();
-       batvalue = (int)(readVcc()/10);  // readVCC returns in tens of mVolt 
-          
-      
-        #ifdef SHOW_DEBUGINFO
-        // print out the value you read:
-        Serial.print("Humidity : ");
-        Serial.println(humidity);
-        Serial.print("T°c : ");
-        Serial.println(temp);
-        Serial.print("Vbatt : ");
-        Serial.println(batvalue);
-        #endif
-  
-}
 
 void onEvent (ev_t ev) {
     Serial.print(os_getTime());
@@ -278,7 +210,7 @@ void onEvent (ev_t ev) {
             Serial.println(F("EV_REJOIN_FAILED"));
             break;
         case EV_TXCOMPLETE:
-            Serial.println(F("EV_TXCOMPLETE (includes waiting for RX windows)"));
+            Serial.println(F("EV_TXCOMPLETE"));
             if (LMIC.txrxFlags & TXRX_ACK)
               Serial.println(F("Received ack"));
             if (LMIC.dataLen) {
@@ -294,12 +226,11 @@ void onEvent (ev_t ev) {
               Serial.println("");
             }
             // Schedule next transmission
-            Serial.end();
-            os_setTimedCallback(&sendjob,os_getTime()+sec2osticks(1), do_send);
-            do_sleep(TX_INTERVAL);
-            Serial.begin(115200);
-            //os_setTimedCallback(&sendjob, os_getTime()+sec2osticks(TX_INTERVAL), do_send);
             
+            os_setTimedCallback(&sendjob,os_getTime()+sec2osticks(1), do_send);
+                     
+            do_sleep(TX_INTERVAL);
+                        
             break;
         case EV_LOST_TSYNC:
             Serial.println(F("EV_LOST_TSYNC"));
@@ -326,31 +257,38 @@ void onEvent (ev_t ev) {
 void do_send(osjob_t* j){
     // Check if there is not a current TX/RX job running
     if (LMIC.opmode & OP_TXRXPEND) {
-        Serial.println(F("OP_TXRXPEND, not sending"));
+        //Serial.println(F("OP_TXRXPEND"));
     } 
     
     else {      
+            int t = s.readTempC()*10;
+            int h = s.readHumidity()*2;
+            int bat = (int)(readVcc()/10); // multiply by 10 for V in Cayenne
+            int l = readLight(); // light sensor in Lx
+            int16_t dataHighres = 0;
+            if( myIMU.readRegisterInt16( &dataHighres, KXTJ3_OUT_X_L ) == 0 ){}
+            int16_t x = dataHighres/16.384;
+            if( myIMU.readRegisterInt16( &dataHighres, KXTJ3_OUT_Y_L ) == 0 ){}
+            int16_t y = dataHighres/16.384;
+            if( myIMU.readRegisterInt16( &dataHighres, KXTJ3_OUT_Z_L ) == 0 ){}
+            int16_t z = dataHighres/16.384;
 
-         updateEnvParameters();
-               
+            
+            Serial.print("Sensors values : temp = ");
+            Serial.print( t/10);
+            Serial.print("deg, hum= ");
+            Serial.print( h/2);
+            Serial.print("%, lum = ");
+            Serial.print( l);
+            Serial.print(" lumen, Accel : X = ");
+            Serial.print( x);
+            Serial.print(" G, Y = ");
+            Serial.print( y);
+            Serial.print(" G, Z = ");
+            Serial.print( z);
+            Serial.println(" G");
         
-        #ifdef SHOW_DEBUGINFO
-            debugPrint(F("T="));
-            debugPrintLn(temp);
-        
-            debugPrint(F("H="));
-            debugPrintLn(humidity);
-            debugPrint(F("L="));
-            debugPrintLn(light);
-            debugPrint(F("BV="));
-            debugPrintLn(batvalue);
-        #endif
-            int t = (int)((temp) * 10.0);
-            int h = (int)(humidity * 2);
-            int bat = batvalue; // multifly by 10 for V in Cayenne
-            int l = light; // light sensor in Lx
-        
-            unsigned char mydata[15];
+            unsigned char mydata[23];
             mydata[0] = 0x1; // CH1
             mydata[1] = 0x67; // Temp
             mydata[2] = t >> 8;
@@ -366,14 +304,17 @@ void do_send(osjob_t* j){
             mydata[12] = 0x65; // Luminosity
             mydata[13] = l >> 8;
             mydata[14] = l & 0xFF;
+            mydata[15] = 0x4; // CH4
+            mydata[16] = 0x71; // Accelerometer
+            mydata[17] = x >> 8;
+            mydata[18] = x & 0xFF;
+            mydata[19] = y >> 8;
+            mydata[20] = y & 0xFF;
+            mydata[21] = z >> 8;
+            mydata[22] = z & 0xFF;
             
             LMIC_setTxData2(1, mydata, sizeof(mydata), 0);
-            #ifdef SHOW_DEBUGINFO
-            debugPrintLn(F("PQ")); //Packet queued
-            Serial.println(F("Packet queued"));
-            #endif
-
-        
+      
     }
     // Next TX is scheduled after TX_COMPLETE event.
 }
@@ -381,19 +322,31 @@ void do_send(osjob_t* j){
 void setup() {
 
     Serial.begin(115200);
-    Serial.println(F("Starting"));
-    pinMode(7, OUTPUT);
-    digitalWrite(7, HIGH);
+    Serial.println("Starting");
+    
+    Wire.begin();
 
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("Starting"));
-    delay(100);
-    #endif  
+    s.begin(true);
+    
+    // Set-up sensors
+    lightsensor.begin();    
+    lightsensor.setPowerUp();
 
+    if( myIMU.begin(sampleRate, accelRange) != 0 )
+  {
+    Serial.print("Failed to initialize IMU.\n");
+  }
+  else
+  {
+    Serial.print("IMU initialized.\n");
+  }
+  
+  // Detection threshold, movement duration and polarity
+  myIMU.intConf(123, 1, 10, HIGH);
+         
     
 
-   updateEnvParameters(); // To have value for the first Tx
-  
+    
 
     // LMIC init
     os_init();
@@ -407,7 +360,7 @@ void setup() {
     So if this helps, you might want to try to lower the percentage (i.e. lower the 10 in the above call), 
     often 1% works well already. */
     
-    LMIC_setClockError(MAX_CLOCK_ERROR * 10 / 100);
+    LMIC_setClockError(MAX_CLOCK_ERROR * 2 / 100);
 
     // Set static session parameters. Instead of dynamically establishing a session
     // by joining the network, precomputed session parameters are be provided.
@@ -430,12 +383,12 @@ void setup() {
     LMIC_setupChannel(0, 868100000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
     LMIC_setupChannel(1, 868300000, DR_RANGE_MAP(DR_SF12, DR_SF7B), BAND_CENTI);      // g-band
     LMIC_setupChannel(2, 868500000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
-    LMIC_setupChannel(3, 867100000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
-    LMIC_setupChannel(4, 867300000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
-    LMIC_setupChannel(5, 867500000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
-    LMIC_setupChannel(6, 867700000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
-    LMIC_setupChannel(7, 867900000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
-    LMIC_setupChannel(8, 868800000, DR_RANGE_MAP(DR_FSK,  DR_FSK),  BAND_MILLI);      // g2-band
+    //LMIC_setupChannel(3, 867100000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
+    //LMIC_setupChannel(4, 867300000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
+    //LMIC_setupChannel(5, 867500000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
+    //LMIC_setupChannel(6, 867700000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
+    //LMIC_setupChannel(7, 867900000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
+    //LMIC_setupChannel(8, 868800000, DR_RANGE_MAP(DR_FSK,  DR_FSK),  BAND_MILLI);      // g2-band
     
     #elif defined(CFG_VN)
     // Set up the 8 channels used    
