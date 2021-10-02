@@ -33,7 +33,7 @@ CRGB leds[NUM_LEDS];
 #define SS 10
 #define RST 8
 #define DI0 3
-#define BAND 865E6  // Here you define the frequency carrier
+#define BAND 865.0E6  // Here you define the frequency carrier
 
 
 

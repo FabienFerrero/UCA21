@@ -98,7 +98,7 @@ const lmic_pinmap lmic_pins = {
   .nss = 10,
   .rxtx = LMIC_UNUSED_PIN,
   .rst = 8,
-  .dio = {3, 7, 6},
+  .dio = {6,6,6},
 };
 
 // ---------------------------------------------------------------------------------
@@ -486,12 +486,17 @@ void setup() {
 
   updateEnvParameters(); // To have value for the first Tx
 
-  
-  
-
   // LMIC init
 
   os_init();
+
+  /* This function is intended to compensate for clock inaccuracy (up to ±10% in this example), 
+    but that also works to compensate for inaccuracies due to software delays. 
+    The downside of this compensation is a longer receive window, which means a higher battery drain. 
+    So if this helps, you might want to try to lower the percentage (i.e. lower the 10 in the above call), 
+    often 1% works well already. */
+    
+    LMIC_setClockError(MAX_CLOCK_ERROR * 2 / 100);
   lmicStartup();  
 
 }

@@ -167,7 +167,7 @@ void setup() {
     So if this helps, you might want to try to lower the percentage (i.e. lower the 10 in the above call), 
     often 1% works well already. */
     
-    LMIC_setClockError(MAX_CLOCK_ERROR * 10 / 100);
+    LMIC_setClockError(MAX_CLOCK_ERROR * 2 / 100);
 
     // Set static session parameters. Instead of dynamically establishing a session
     // by joining the network, precomputed session parameters are be provided.
