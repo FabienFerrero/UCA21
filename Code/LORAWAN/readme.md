@@ -1,4 +1,10 @@
-# LoRaWAN MAC
+# LoRaWAN
+
+All LoRaWan code are based on Arduino-LMIC library ("MCCI LoRaWAN LMIC Library") : https://github.com/mcci-catena/arduino-lorawan
+
+The Library has been configured for UCA21 board.
+
+# LoRaWAN timing issue
 
 In \libraries\arduino-lmic\project_config\lmic_project_config.h
 

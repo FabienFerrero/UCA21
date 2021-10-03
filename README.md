@@ -8,11 +8,11 @@ Author: Fabien Ferrero and Trinh Le Huy
 This board was developed for education to support courses on embedded software, digital and analog electronic, telecommunication, signal processing and IoT.
 
 # What's new
-- Lithium battery charger + JST-PH 2pin and 3pin connector
-- Accelemeter sensor
-- Temp/Humidity sensor
-- Light sensor
-- 21 RGB Leds
+- Lithium battery charger + JST-PH 2pin and 3pin connector : MCP73831
+- Accelerometer sensor : KXTJ3-1057
+- Temp/Humidity sensor : SHTC3
+- Light sensor : TR-303A
+- 21 RGB Leds : WS2812-2020
 - Optimized sleep mode to 5uA
 - VSWR meter
 
@@ -23,7 +23,7 @@ The board is fabricated by RFThings.
 # Wiring
 
 ```
- ATMega328p       LoRa RFM95W 
+ ATMega328pb       LoRa RFM95W 
                    Module
  D8          <----> RST
  MISO  (D12) <----> MISO
