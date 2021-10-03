@@ -1,0 +1,19 @@
+{
+    "name": "arduino-SHTC3",
+    "keywords": "sensor , temperature, humidity , SHTC3",
+    "description": "A minimial arduino library fro SHTC3 Temperature & Humidity sensor",
+    "repository":
+    {
+      "type": "git",
+      "url": "https://github.com/ludiazv/arduino-SHTC3.git"
+    },
+    "version": "0.0.3",
+    "frameworks": "arduino",
+    "platforms": [
+      "atmelavr",
+      "atmelsam",
+      "teensy",
+      "espressif32",
+      "espressif8266"
+    ]
+  }
