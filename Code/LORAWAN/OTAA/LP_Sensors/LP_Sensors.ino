@@ -1,3 +1,4 @@
+
 /*******************************************************************************
    Copyright (c) 2015 Thomas Telkamp and Matthijs Kooijman
 
@@ -12,10 +13,21 @@
    application key is configured, which are used in an over-the-air
    activation procedure where a DevAddr and session keys are
    assigned/generated for use with all further communication.
-   
+
+   Note: LoRaWAN per sub-band duty-cycle limitation is enforced (1% in
+   g1, 0.1% in g2), but not the TTN fair usage policy (which is probably
+   violated by this sketch when left running for longer)!
+
+   To use this sketch, first register your application and device with
+   the things network, to set or generate an AppEUI, DevEUI and AppKey.
+   Multiple devices can use the same AppEUI, but each device has its own
+   DevEUI and AppKey.
+
+   Do not forget to define the radio type correctly in config.h.
+
 /*******************************************************************************
- This exemples has been modified by Fabien Ferrero to work on UCA Education board 
- and to remotly control the RGB LEDs
+ This exemples has been modified by Fabien Ferrero to work on UCA board 
+ and to send various sensors payload
  ****************************************************************************************
  */
 
@@ -23,71 +35,67 @@
 #include <hal/hal.h>
 #include <SPI.h>
 #include <Wire.h>
+#include "LowPower.h"
 
 //Sensors librairies
+#include <Wire.h>
+#include <LTR303.h>
+#include "kxtj3-1057.h" // http://librarymanager/All#kxtj3-1057
+#include "SHTC3.h"
 
 #define debugSerial Serial
 #define SHOW_DEBUGINFO
 #define debugPrintLn(...) { if (debugSerial) debugSerial.println(__VA_ARGS__); }
 #define debugPrint(...) { if (debugSerial) debugSerial.print(__VA_ARGS__); }
 
-//Commented out keys have been zeroed for github
+// Create sensors:
+
+LTR303 lightsensor;
+KXTJ3 myIMU(0x0E); // Address can be 0x0E or 0x0F
+SHTC3 s(Wire);
+
+float   sampleRate = 6.25;  // HZ - Samples per second - 0.781, 1.563, 3.125, 6.25, 12.5, 25, 50, 100, 200, 400, 800, 1600Hz
+uint8_t accelRange = 2;     // Accelerometer range = 2, 4, 8, 16g
+
+
+//Commented out keys have been zeroed for github - the lines can be copied to a keys.h file and real keys inserted
+
 
 // This EUI must be in little-endian format, so least-significant-byte
 // first. When copying an EUI from ttnctl output, this means to reverse
 // the bytes. For TTN issued EUIs the last bytes should be 0xD5, 0xB3,
 // 0x70.
-static const u1_t PROGMEM APPEUI[8] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-void os_getArtEui (u1_t* buf) {
-  memcpy_P(buf, APPEUI, 8);
-}
+static const u1_t PROGMEM APPEUI[8]={ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+void os_getArtEui (u1_t* buf) { memcpy_P(buf, APPEUI, 8);}
 
 // This should also be in little endian format, see above.
-static const u1_t PROGMEM DEVEUI[8] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-void os_getDevEui (u1_t* buf) {
-  memcpy_P(buf, DEVEUI, 8);
-}
+static const u1_t PROGMEM DEVEUI[8]={ 0x97, 0x4C, 0x04, 0xD0, 0x7E, 0xD5, 0xB3, 0x70 };
+void os_getDevEui (u1_t* buf) { memcpy_P(buf, DEVEUI, 8);}
 
 // This key should be in big endian format (or, since it is not really a
 // number but a block of memory, endianness does not really apply). In
 // practice, a key taken from ttnctl can be copied as-is.
-// The key shown here is the semtech default key.
-static const u1_t PROGMEM APPKEY[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-void os_getDevKey (u1_t* buf) {
-  memcpy_P(buf, APPKEY, 16);
-}
+static const u1_t PROGMEM APPKEY[16] = { 0xFC, 0x3B, 0xF9, 0x11, 0xF1, 0x05, 0xB6, 0x10, 0xF3, 0x13, 0xDD, 0x12, 0x71, 0xB3, 0xAA, 0x95 };
+void os_getDevKey (u1_t* buf) {  memcpy_P(buf, APPKEY, 16);}
 
-// LED control
-#include <FastLED.h>
-#define LED_PIN     4
-#define NUM_LEDS    21
-#define BRIGHTNESS  64
-#define LED_TYPE    WS2812
-#define COLOR_ORDER GRB
-#define UPDATES_PER_SECOND 100
-CRGB leds[NUM_LEDS];
-CRGBPalette16 currentPalette;
-TBlendType    currentBlending;
-extern CRGBPalette16 myRedWhiteBluePalette;
-extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
 
 
 static osjob_t sendjob;
 
+// global enviromental parameters
+static float temp = 0.0;
+//static float pressure = 0.0;
+static float humidity = 0.0;
+static float batvalue;
+static float light;
+static int16_t a_x = 0; // acclerometer
+static int16_t a_y = 0;
+static int16_t a_z = 0;
 
 
-// global enviromental parameters : Place here the environment data you want to measure
 
 
-static float batvalue = 0.0;
-
-static int LED_RED = 0;
-static int LED_BLUE = 0;
-static int LED_GREEN = 0;
-
-
-
-// Pin mapping for RFM95
+// Pin mapping
 const lmic_pinmap lmic_pins = {
   .nss = 10,
   .rxtx = LMIC_UNUSED_PIN,
@@ -140,7 +148,7 @@ void setDataRate() {
     #ifdef SHOW_DEBUGINFO
     debugPrintLn(F("Datarate: SF7"));
     #endif
-      TX_INTERVAL = 30;
+      TX_INTERVAL = 180;
       break;
     case DR_SF7B: 
     #ifdef SHOW_DEBUGINFO
@@ -160,12 +168,55 @@ void setDataRate() {
   }
 }
 
-void setColor(int redValue,  int blueValue, int greenValue) {
-
-fill_solid( leds, NUM_LEDS, CRGB(greenValue,redValue,blueValue));
-FastLED.show();  
- 
+extern volatile unsigned long timer0_millis;
+void addMillis(unsigned long extra_millis) {
+  uint8_t oldSREG = SREG;
+  cli();
+  timer0_millis += extra_millis;
+  SREG = oldSREG;
+  sei();
 }
+
+void do_sleep(unsigned int sleepyTime) {
+  unsigned int eights = sleepyTime / 8;
+  unsigned int fours = (sleepyTime % 8) / 4;
+  unsigned int twos = ((sleepyTime % 8) % 4) / 2;
+  unsigned int ones = ((sleepyTime % 8) % 4) % 2;
+
+#ifdef SHOW_DEBUGINFO
+  debugPrint(F("Sleeping for "));
+  debugPrint(sleepyTime);
+  debugPrint(F(" seconds = "));
+  debugPrint(eights);
+  debugPrint(F(" x 8 + "));
+  debugPrint(fours);
+  debugPrint(F(" x 4 + "));
+  debugPrint(twos);
+  debugPrint(F(" x 2 + "));
+  debugPrintLn(ones);
+  delay(500); //Wait for serial to complete
+#endif
+
+
+  for ( int x = 0; x < eights; x++) {
+    // put the processor to sleep for 8 seconds
+    LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+  }
+  for ( int x = 0; x < fours; x++) {
+    // put the processor to sleep for 4 seconds
+    LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF);
+  }
+  for ( int x = 0; x < twos; x++) {
+    // put the processor to sleep for 2 seconds
+    LowPower.powerDown(SLEEP_2S, ADC_OFF, BOD_OFF);
+  }
+  for ( int x = 0; x < ones; x++) {
+    // put the processor to sleep for 1 seconds
+    LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
+  }
+  addMillis(sleepyTime * 1000);
+}
+
 
 long readVcc() {
   long result;
@@ -180,21 +231,57 @@ long readVcc() {
   return result;
 }
 
+float readLight() {
+  double result;
+        unsigned int data0, data1;
+        lightsensor.getData(data0,data1);
+    
+    // Perform lux calculation:
 
+    lightsensor.getLux(0,1,data0,data1,result);  
+            return result;
+}
 
-void updateEnvParameters() // place here your sensing
-{  
-  
+void updateEnvParameters()
+{
+ 
+  temp = s.readTempC();
+  humidity = s.readHumidity();
+  light = readLight();
   batvalue = (int)(readVcc()/10);  // readVCC returns in tens of mVolt 
-
-  
-
+  int16_t dataHighres = 0;
+  if( myIMU.readRegisterInt16( &dataHighres, KXTJ3_OUT_X_L ) == 0 ){}
+  a_x = dataHighres/16.384;
+  if( myIMU.readRegisterInt16( &dataHighres, KXTJ3_OUT_Y_L ) == 0 ){}
+  a_y = dataHighres/16.384;
+  if( myIMU.readRegisterInt16( &dataHighres, KXTJ3_OUT_Z_L ) == 0 ){}
+  a_z = dataHighres/16.384;
+    
 
   #ifdef SHOW_DEBUGINFO
   // print out the value you read:
-  Serial.print("Vbatt : ");
-  Serial.println(batvalue);
-  #endif 
+  Serial.print("Sensors values : temp = ");
+            Serial.print( temp);
+            Serial.print("deg, hum= ");
+            Serial.print( humidity);
+            Serial.print("%, lum = ");
+            Serial.print( light);
+            Serial.print(" lumen, Accel : X = ");
+            Serial.print( a_x);
+            Serial.print(" G, Y = ");
+            Serial.print( a_y);
+            Serial.print(" G, Z = ");
+            Serial.print( a_z);
+            Serial.println(" G");
+  #endif
+  
+}
+
+void printHex2(unsigned v) {
+    v &= 0xff;
+    if (v < 16)
+        Serial.print('0');
+    Serial.print(v, HEX);
 }
 
 
@@ -224,15 +311,44 @@ void onEvent (ev_t ev) {
     case EV_JOINING:
     #ifdef SHOW_DEBUGINFO
     debugPrintLn(F("EV_JOINING"));
-    #endif
-    setColor(0, 0, 64);   //RED   
+    #endif      
       break;
     case EV_JOINED:
     #ifdef SHOW_DEBUGINFO
     debugPrintLn(F("EV_JOINED"));
-    #endif
-    setColor(64, 0, 0); //GREEN  
-      setDataRate();      
+    setDataRate();  // adapt SF
+            {
+              u4_t netid = 0;
+              devaddr_t devaddr = 0;
+              u1_t nwkKey[16];
+              u1_t artKey[16];
+              LMIC_getSessionKeys(&netid, &devaddr, nwkKey, artKey);
+              Serial.print("netid: ");
+              Serial.println(netid, DEC);
+              Serial.print("devaddr: ");
+              Serial.println(devaddr, HEX);
+              Serial.print("AppSKey: ");
+              for (size_t i=0; i<sizeof(artKey); ++i) {
+                if (i != 0)
+                  Serial.print("-");
+                printHex2(artKey[i]);
+              }
+              Serial.println("");
+              Serial.print("NwkSKey: ");
+              for (size_t i=0; i<sizeof(nwkKey); ++i) {
+                      if (i != 0)
+                              Serial.print("-");
+                      printHex2(nwkKey[i]);
+              }
+              Serial.println();
+            }
+           
+    #endif      
+      setDataRate(); 
+      // Disable link check validation (automatically enabled
+            // during join, but because slow data rates change max TX
+      // size, we don't use it in this example.
+            LMIC_setLinkCheckMode(0);     
       // Ok send our first data in 10 ms
       os_setTimedCallback(&sendjob, os_getTime() + ms2osticks(10), do_send);
       break;
@@ -266,53 +382,25 @@ void onEvent (ev_t ev) {
       #ifdef SHOW_DEBUGINFO
       debugPrintLn(F("Received ack"));
       #endif
-              
+        
       if (LMIC.dataLen) {
         #ifdef SHOW_DEBUGINFO
-        debugPrint(F("Received "));
-        debugPrint(LMIC.dataLen/4);
-        debugPrintLn(F(" downlink(s)"));
+        debugPrintLn(F("Received "));
+        debugPrintLn(LMIC.dataLen);
+        debugPrintLn(F(" bytes of payload"));
         for (int i = 0; i < LMIC.dataLen; i++) {
-        if (LMIC.frame[LMIC.dataBeg + i] < 0x10) {
-            Serial.print(F("0"));
-        }
-        Serial.print(LMIC.frame[LMIC.dataBeg + i], HEX);
-    }
-    Serial.println();
-    #endif 
-     
-      for(int i = 0; i < LMIC.dataLen/4;i++){
-        
-        switch (LMIC.frame[LMIC.dataBeg+4*i]){
-        case 0x06 :
-        LED_RED = (word(LMIC.frame[LMIC.dataBeg+1],LMIC.frame[LMIC.dataBeg+2])); // Converter download payload in int
-        #ifdef SHOW_DEBUGINFO
-        Serial.println(LED_RED);
-        #endif
-        break;
+              if (LMIC.frame[LMIC.dataBeg + i] < 0x10) {
+              Serial.print(F("0"));
+              }
+              Serial.print(LMIC.frame[LMIC.dataBeg + i], HEX);
+              }
+              Serial.println("");
+        #endif 
        
-        case 0x07 :
-        LED_BLUE = (word(LMIC.frame[LMIC.dataBeg+1],LMIC.frame[LMIC.dataBeg+2])); // Converter download payload in int
-        #ifdef SHOW_DEBUGINFO
-        Serial.println(LED_BLUE);
-        #endif
-        break;
-
-        case 0x08 :
-        LED_GREEN = (word(LMIC.frame[LMIC.dataBeg+1],LMIC.frame[LMIC.dataBeg+2])); // Converter download payload in int
-        #ifdef SHOW_DEBUGINFO
-        Serial.println(LED_GREEN);
-        #endif
-        break;
-        }
       }
-     }
-     delay(5);
-      setColor(LED_GREEN*2.55, LED_BLUE*2.55, LED_RED*2.55);
-     
-           
-       // Schedule next transmission
+            // Schedule next transmission
       setDataRate();
+      do_sleep(TX_INTERVAL);
       os_setCallback(&sendjob, do_send);
       break;
     case EV_LOST_TSYNC:
@@ -349,6 +437,7 @@ void onEvent (ev_t ev) {
   }
 }
 
+
 void do_send(osjob_t* j) {
   // Check if there is not a current TX/RX job running
   if (LMIC.opmode & OP_TXRXPEND) {
@@ -357,36 +446,49 @@ void do_send(osjob_t* j) {
     // Prepare upstream data transmission at the next possible time.
     // Here the sensor information should be retrieved
     
-    updateEnvParameters(); // Sensing parameters are updated
-   
+    updateEnvParameters();
+       
 
 #ifdef SHOW_DEBUGINFO
+    debugPrint(F("T="));
+    debugPrintLn(temp);
+
+    debugPrint(F("H="));
+    debugPrintLn(humidity);
+    debugPrint(F("L="));
+    debugPrintLn(light);
     debugPrint(F("BV="));
     debugPrintLn(batvalue);
 #endif
-
-// Formatting for Cayenne LPP
-    
-    
+    int t = (int)((temp) * 10.0);
+    int h = (int)(humidity * 2.0);
     int bat = batvalue; // multifly by 10 for V in Cayenne
+    int l = light; // light sensor in Lx
 
-    unsigned char mydata[16];
-    mydata[0] = 0x2;  // 2nd Channel
-    mydata[1] = 0x2;  // Analog Value
-    mydata[2] = bat >> 8;
-    mydata[3] = bat & 0xFF;
-    mydata[4] = 0x6;  // 6th Channel
-    mydata[5] = 0x3;  // Analog Value PWM red
-    mydata[6] = LED_RED >> 8;
-    mydata[7] = LED_RED & 0xFF;
-    mydata[8] = 0x7;  // 7th Channel
-    mydata[9] = 0x3;  // Analog Value PWM red
-    mydata[10] = LED_BLUE >> 8;
-    mydata[11] = LED_BLUE & 0xFF;
-    mydata[12] = 0x8;  // 8th Channel
-    mydata[13] = 0x3;  // Analog Value PWM red
-    mydata[14] = LED_GREEN >> 8;
-    mydata[15] = LED_GREEN & 0xFF;
+    unsigned char mydata[23];
+            mydata[0] = 0x1; // CH1
+            mydata[1] = 0x67; // Temp
+            mydata[2] = t >> 8;
+            mydata[3] = t & 0xFF;
+            mydata[4] = 0x2; // CH2
+            mydata[5] = 0x68; // Humidity
+            mydata[6] = h & 0xFF;
+            mydata[7] = 0x3; // CH3
+            mydata[8] = 0x2; // Analog output
+            mydata[9] = bat >> 8;
+            mydata[10] = bat & 0xFF;
+            mydata[11] = 0x4; // CH4
+            mydata[12] = 0x65; // Luminosity
+            mydata[13] = l >> 8;
+            mydata[14] = l & 0xFF;
+            mydata[15] = 0x4; // CH4
+            mydata[16] = 0x71; // Accelerometer
+            mydata[17] = a_x >> 8;
+            mydata[18] = a_x & 0xFF;
+            mydata[19] = a_y >> 8;
+            mydata[20] = a_y & 0xFF;
+            mydata[21] = a_z >> 8;
+            mydata[22] = a_z & 0xFF;
     
     LMIC_setTxData2(1, mydata, sizeof(mydata), 0);
     debugPrintLn(F("PQ")); //Packet queued
@@ -394,34 +496,26 @@ void do_send(osjob_t* j) {
   // Next TX is scheduled after TX_COMPLETE event.
 }
 
-
 void lmicStartup() {
   // Reset the MAC state. Session and pending data transfers will be discarded.
   LMIC_reset();
 
-    LMIC_setLinkCheckMode(1);
-    LMIC_setAdrMode(1);
-    LMIC_setClockError(MAX_CLOCK_ERROR * 1 / 100); // Increase window time for clock accuracy problem
-  
+  LMIC_setLinkCheckMode(1);
+  LMIC_setAdrMode(1);
+  LMIC_setClockError(MAX_CLOCK_ERROR * 1 / 100); // Increase window time for clock accuracy problem
   
 
-  
   // Start job (sending automatically starts OTAA too)
   // Join the network, sending will be
   // started after the event "Joined"
   LMIC_startJoining();
 }
 
-
-// ---------------------------------------------------------------------------------
-
 void setup() {
   Serial.begin(115200);
   delay(1000); //Wait 1s in order to avoid UART programmer issues when a battery is used
   
   Serial.begin(115200);
-
-  FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
   
   #ifdef SHOW_DEBUGINFO
   debugPrintLn(F("Starting"));
@@ -429,15 +523,29 @@ void setup() {
   #endif
   
   Wire.begin();
+  s.begin(true);
+  // Set-up sensors
+    lightsensor.begin();    
+    lightsensor.setPowerUp();
 
-  
+    if( myIMU.begin(sampleRate, accelRange) != 0 )
+  {
+    Serial.print("Failed to initialize IMU.\n");
+  }
+  else
+  {
+    Serial.print("IMU initialized.\n");
+  }  
+  // Detection threshold, movement duration and polarity
+  myIMU.intConf(123, 1, 10, HIGH);
+
   updateEnvParameters(); // To have value for the first Tx
   
 
   // LMIC init
-
   os_init();
-  lmicStartup();  
+  lmicStartup();
+
   /* This function is intended to compensate for clock inaccuracy (up to ±10% in this example), 
     but that also works to compensate for inaccuracies due to software delays. 
     The downside of this compensation is a longer receive window, which means a higher battery drain. 

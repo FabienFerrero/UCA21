@@ -146,19 +146,18 @@ void onEvent (ev_t ev) {
         case EV_JOINING:
             #ifdef SHOW_LED
            StartLED(9,1000,100);
-          #endif
-          #ifdef SHOW_DEBUGINFO
+          #endif          
           Serial.println(F("EV_JOINING"));
-    #endif
+          
        break;
         case EV_JOINED:
             #ifdef SHOW_LED
             StartLED(4,1000,100);
             #endif
-            //#ifdef SHOW_DEBUGINFO
+            
             Serial.println("EV_JOINED");
-            //#endif
-           // setDataRate();  // adapt SF
+            
+            setDataRate();  // adapt SF
             {
               u4_t netid = 0;
               devaddr_t devaddr = 0;
@@ -285,7 +284,7 @@ void do_send(osjob_t* j){
     mydata[3] = bat & 0xFF;
         
     LMIC_setTxData2(1, mydata, sizeof(mydata), 0);
-    Serial.println(F("PQ")); //Packet queued
+    
   }
   // Next TX is scheduled after TX_COMPLETE event.
 }
@@ -403,6 +402,8 @@ void setup() {
     StartLED(1,1400,100);
     delay(1000);
     #endif 
+
+    Serial.println("Starting"); //Packet queued
 
   
    

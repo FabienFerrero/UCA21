@@ -87,7 +87,7 @@ const lmic_pinmap lmic_pins = {
     .nss = 10,
     .rxtx = LMIC_UNUSED_PIN,
     .rst = 8,
-    .dio = {3, 7, 6},
+    .dio = {6, 6, 6},
 };
 
 
@@ -376,7 +376,7 @@ void setup() {
     So if this helps, you might want to try to lower the percentage (i.e. lower the 10 in the above call), 
     often 1% works well already. */
     
-    LMIC_setClockError(MAX_CLOCK_ERROR * 10 / 100);
+    LMIC_setClockError(MAX_CLOCK_ERROR * 2 / 100);
 
     // Set static session parameters. Instead of dynamically establishing a session
     // by joining the network, precomputed session parameters are be provided.

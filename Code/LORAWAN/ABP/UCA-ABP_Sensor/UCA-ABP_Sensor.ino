@@ -342,11 +342,7 @@ void setup() {
   }
   
   // Detection threshold, movement duration and polarity
-  myIMU.intConf(123, 1, 10, HIGH);
-         
-    
-
-    
+  myIMU.intConf(123, 1, 10, HIGH); 
 
     // LMIC init
     os_init();
