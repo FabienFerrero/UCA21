@@ -26,10 +26,10 @@
 
 // SX1278 has the following connections:
 // NSS pin:   10
-// DIO0 pin:  2
-// RESET pin: 9
-// DIO1 pin:  3
-SX1276 radio = new Module(10, 3, 8, 6);
+// DIO0 pin:  6
+// RESET pin: 8
+// DIO1 pin:  6
+SX1276 radio = new Module(10, 6, 8, 6);
 
 // or using RadioShield
 // https://github.com/jgromes/RadioShield

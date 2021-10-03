@@ -25,7 +25,7 @@ int receive = 0;
 
 const int csPin = 10;          // LoRa radio chip select
 const int resetPin = 8;       // LoRa radio reset
-const int irqPin = 3;         // change for your board; must be a hardware interrupt pin
+const int irqPin = 6;         // change for your board; must be a hardware interrupt pin
 
 String outgoing;              // outgoing message
 

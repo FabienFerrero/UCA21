@@ -54,7 +54,7 @@ int m =sizeof(melody1); // size of music table
 // DIO0 pin:  3
 // RESET pin: 9
 // DIO1 pin:  7
-SX1276 fsk = new Module(10, 3, 9, 6);
+SX1276 fsk = new Module(10, 6, 8, 6);
 
 // create AFSK client instance using the FSK module
 // this requires connection to the module direct 

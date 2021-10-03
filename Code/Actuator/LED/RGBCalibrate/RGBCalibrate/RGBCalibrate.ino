@@ -26,7 +26,7 @@
 #include "LowPower.h"
 #include <LoRa.h>
 
-#define NUM_LEDS 9
+#define NUM_LEDS 21
 
 // Data pin that led data will be written out over
 #define DATA_PIN 4
