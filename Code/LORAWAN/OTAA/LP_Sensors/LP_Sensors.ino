@@ -460,9 +460,9 @@ void do_send(osjob_t* j) {
     debugPrint(F("BV="));
     debugPrintLn(batvalue);
 #endif
-    int t = (int)((temp) * 10.0);
-    int h = (int)(humidity * 2.0);
-    int bat = batvalue; // multifly by 10 for V in Cayenne
+    int t = (int)((temp) * 10.0); // adapt to Cayenne format
+    int h = (int)(humidity * 2.0); // adapt to Cayenne format
+    int bat = batvalue; 
     int l = light; // light sensor in Lx
 
     unsigned char mydata[23];
