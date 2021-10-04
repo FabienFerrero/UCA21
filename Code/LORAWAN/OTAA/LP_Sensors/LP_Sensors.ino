@@ -43,10 +43,7 @@
 #include "kxtj3-1057.h" // http://librarymanager/All#kxtj3-1057
 #include "SHTC3.h"
 
-#define debugSerial Serial
 #define SHOW_DEBUGINFO
-#define debugPrintLn(...) { if (debugSerial) debugSerial.println(__VA_ARGS__); }
-#define debugPrint(...) { if (debugSerial) debugSerial.print(__VA_ARGS__); }
 
 // Create sensors:
 
@@ -116,54 +113,54 @@ void setDataRate() {
   switch (LMIC.datarate) {
     case DR_SF12:
     #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("Datarate: SF12"));
+    Serial.println(F("Datarate: SF12"));
     #endif      
-      TX_INTERVAL = 4800;
+      TX_INTERVAL = 1920;
       break;
     case DR_SF11: 
     #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("Datarate: SF11"));
+    Serial.println(F("Datarate: SF11"));
     #endif
-      TX_INTERVAL = 2400;
+      TX_INTERVAL = 960;
       break;
     case DR_SF10: 
     #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("Datarate: SF10"));
+    Serial.println(F("Datarate: SF10"));
     #endif
-      TX_INTERVAL = 1200;
+      TX_INTERVAL = 480;
       break;
     case DR_SF9: 
     #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("Datarate: SF9"));
+    Serial.println(F("Datarate: SF9"));
     #endif
-      TX_INTERVAL = 600;
+      TX_INTERVAL = 240;
       break;
     case DR_SF8: 
     #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("Datarate: SF8"));
+    Serial.println(F("Datarate: SF8"));
     #endif
-      TX_INTERVAL = 360;
+      TX_INTERVAL = 120;
       break;
     case DR_SF7: 
     #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("Datarate: SF7"));
+    Serial.println(F("Datarate: SF7"));
     #endif
-      TX_INTERVAL = 180;
+      TX_INTERVAL = 60;
       break;
     case DR_SF7B: 
     #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("Datarate: SF7B"));
+    Serial.println(F("Datarate: SF7B"));
     #endif
-      TX_INTERVAL = 180;
+      TX_INTERVAL = 60;
       break;
     case DR_FSK: 
     #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("Datarate: FSK"));
+    Serial.println(F("Datarate: FSK"));
     #endif
-      TX_INTERVAL = 180;
+      TX_INTERVAL = 60;
       break;
-    default: debugPrint(F("Datarate Unknown Value: "));
-      debugPrintLn(LMIC.datarate); TX_INTERVAL = 600;
+    default: Serial.print(F("Datarate Unknown Value: "));
+      Serial.println(LMIC.datarate); TX_INTERVAL = 600;
       break;
   }
 }
@@ -184,16 +181,16 @@ void do_sleep(unsigned int sleepyTime) {
   unsigned int ones = ((sleepyTime % 8) % 4) % 2;
 
 #ifdef SHOW_DEBUGINFO
-  debugPrint(F("Sleeping for "));
-  debugPrint(sleepyTime);
-  debugPrint(F(" seconds = "));
-  debugPrint(eights);
-  debugPrint(F(" x 8 + "));
-  debugPrint(fours);
-  debugPrint(F(" x 4 + "));
-  debugPrint(twos);
-  debugPrint(F(" x 2 + "));
-  debugPrintLn(ones);
+  Serial.print(F("Sleeping for "));
+  Serial.print(sleepyTime);
+  Serial.print(F(" seconds = "));
+  Serial.print(eights);
+  Serial.print(F(" x 8 + "));
+  Serial.print(fours);
+  Serial.print(F(" x 4 + "));
+  Serial.print(twos);
+  Serial.print(F(" x 2 + "));
+  Serial.println(ones);
   delay(500); //Wait for serial to complete
 #endif
 
@@ -289,35 +286,32 @@ void printHex2(unsigned v) {
 
 
 void onEvent (ev_t ev) {
-  #ifdef SHOW_DEBUGINFO
-  Serial.print(os_getTime());
-  Serial.print(": ");
-  #endif
+  
   switch (ev) {
     case EV_SCAN_TIMEOUT:
       #ifdef SHOW_DEBUGINFO
-      debugPrintLn(F("EV_SCAN_TIMEOUT"));
+      Serial.println(F("EV_SCAN_TIMEOUT"));
       #endif     
       break;
     case EV_BEACON_FOUND:
       #ifdef SHOW_DEBUGINFO
-      debugPrintLn(F("EV_BEACON_FOUND"));
+      Serial.println(F("EV_BEACON_FOUND"));
       #endif      
       break;
     case EV_BEACON_MISSED:
-      //debugPrintLn(F("EV_BEACON_MISSED"));
+      //Serial.println(F("EV_BEACON_MISSED"));
       break;
     case EV_BEACON_TRACKED:
-      //debugPrintLn(F("EV_BEACON_TRACKED"));
+      //Serial.println(F("EV_BEACON_TRACKED"));
       break;
     case EV_JOINING:
       #ifdef SHOW_DEBUGINFO
-      debugPrintLn(F("EV_JOINING"));
+      Serial.println(F("EV_JOINING"));
       #endif      
       break;
     case EV_JOINED:
       #ifdef SHOW_DEBUGINFO
-      debugPrintLn(F("EV_JOINED"));
+      Serial.println(F("EV_JOINED"));
                   {
               u4_t netid = 0;
               devaddr_t devaddr = 0;
@@ -357,14 +351,14 @@ void onEvent (ev_t ev) {
        
     case EV_JOIN_FAILED:
     #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("EV_JOIN_FAILED"));
+    Serial.println(F("EV_JOIN_FAILED"));
     #endif
       
       lmicStartup(); //Reset LMIC and retry
       break;
     case EV_REJOIN_FAILED:
     #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("EV_REJOIN_FAILED"));
+    Serial.println(F("EV_REJOIN_FAILED"));
     #endif
       
       lmicStartup(); //Reset LMIC and retry
@@ -373,19 +367,19 @@ void onEvent (ev_t ev) {
     case EV_TXCOMPLETE:
 
     #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("EV_TXCOMPLETE (includes waiting for RX windows)"));
+    Serial.println(F("EV_TXCOMPLETE (includes waiting for RX windows)"));
     #endif
       
       if (LMIC.txrxFlags & TXRX_ACK)
       #ifdef SHOW_DEBUGINFO
-      debugPrintLn(F("Received ack"));
+      Serial.println(F("Received ack"));
       #endif
         
       if (LMIC.dataLen) {
         #ifdef SHOW_DEBUGINFO
-        debugPrintLn(F("Received "));
-        debugPrintLn(LMIC.dataLen);
-        debugPrintLn(F(" bytes of payload"));
+        Serial.println(F("Received "));
+        Serial.println(LMIC.dataLen);
+        Serial.println(F(" bytes of payload"));
         for (int i = 0; i < LMIC.dataLen; i++) {
               if (LMIC.frame[LMIC.dataBeg + i] < 0x10) {
               Serial.print(F("0"));
@@ -403,28 +397,28 @@ void onEvent (ev_t ev) {
       break;
     case EV_LOST_TSYNC:
       #ifdef SHOW_DEBUGINFO
-      debugPrintLn(F("EV_LOST_TSYNC"));
+      Serial.println(F("EV_LOST_TSYNC"));
       #endif      
       break;
     case EV_RESET:
       #ifdef SHOW_DEBUGINFO
-      debugPrintLn(F("EV_RESET"));
+      Serial.println(F("EV_RESET"));
       #endif        
       break;
     case EV_RXCOMPLETE:
       // data received in ping slot
       #ifdef SHOW_DEBUGINFO
-      debugPrintLn(F("EV_RXCOMPLETE"));
+      Serial.println(F("EV_RXCOMPLETE"));
       #endif      
       break;
     case EV_LINK_DEAD:
       #ifdef SHOW_DEBUGINFO
-      debugPrintLn(F("EV_LINK_DEAD"));
+      Serial.println(F("EV_LINK_DEAD"));
       #endif       
       break;
     case EV_LINK_ALIVE:
       #ifdef SHOW_DEBUGINFO
-      debugPrintLn(F("EV_LINK_ALIVE"));
+      Serial.println(F("EV_LINK_ALIVE"));
       #endif       
       break;
       case EV_TXSTART:
@@ -443,7 +437,7 @@ void onEvent (ev_t ev) {
             break;    
     default:
       #ifdef SHOW_DEBUGINFO
-      debugPrintLn(F("Unknown event"));
+      Serial.println(F("Unknown event"));
       #endif      
       break;
   }
@@ -453,25 +447,13 @@ void onEvent (ev_t ev) {
 void do_send(osjob_t* j) {
   // Check if there is not a current TX/RX job running
   if (LMIC.opmode & OP_TXRXPEND) {
-    debugPrintLn(F("OP_TXRXPEND, not sending"));
+    Serial.println(F("OP_TXRXPEND, not sending"));
   } else {
     // Prepare upstream data transmission at the next possible time.
     // Here the sensor information should be retrieved
     
     updateEnvParameters();
-       
 
-#ifdef SHOW_DEBUGINFO
-    debugPrint(F("T="));
-    debugPrintLn(temperature);
-
-    debugPrint(F("H="));
-    debugPrintLn(humidity);
-    debugPrint(F("L="));
-    debugPrintLn(light);
-    debugPrint(F("BV="));
-    debugPrintLn(batvalue);
-#endif
     int t = (int)((temperature) * 10.0); // adapt to Cayenne format
     int h = (int)(humidity * 2.0); // adapt to Cayenne format
     int bat = batvalue; 
@@ -503,7 +485,7 @@ void do_send(osjob_t* j) {
             mydata[22] = a_z & 0xFF;
     
     LMIC_setTxData2(1, mydata, sizeof(mydata), 0);
-    debugPrintLn(F("PQ")); //Packet queued
+    Serial.println(F("Packet queued")); //Packet queued
   }
   // Next TX is scheduled after TX_COMPLETE event.
 }
@@ -529,7 +511,7 @@ void setup() {
   
    
   #ifdef SHOW_DEBUGINFO
-  debugPrintLn(F("Starting"));
+  Serial.println(F("Starting"));
   delay(100);
   #endif
   
@@ -549,9 +531,6 @@ void setup() {
   }  
   // Detection threshold, movement duration and polarity
   myIMU.intConf(123, 1, 10, HIGH);
-
-  updateEnvParameters(); // To have value for the first Tx
-  
 
   // LMIC init
   os_init();
