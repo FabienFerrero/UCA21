@@ -23,13 +23,9 @@
 #include <hal/hal.h>
 #include <SPI.h>
 #include <Wire.h>
+#include "LowPower.h"
 
 //Sensors librairies
-
-#define debugSerial Serial
-#define SHOW_DEBUGINFO
-#define debugPrintLn(...) { if (debugSerial) debugSerial.println(__VA_ARGS__); }
-#define debugPrint(...) { if (debugSerial) debugSerial.print(__VA_ARGS__); }
 
 //Commented out keys have been zeroed for github
 
@@ -43,7 +39,7 @@ void os_getArtEui (u1_t* buf) {
 }
 
 // This should also be in little endian format, see above.
-static const u1_t PROGMEM DEVEUI[8] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+static const u1_t PROGMEM DEVEUI[8] = { 0x97, 0x4C, 0x04, 0xD0, 0x7E, 0xD5, 0xB3, 0x70 };
 void os_getDevEui (u1_t* buf) {
   memcpy_P(buf, DEVEUI, 8);
 }
@@ -52,7 +48,7 @@ void os_getDevEui (u1_t* buf) {
 // number but a block of memory, endianness does not really apply). In
 // practice, a key taken from ttnctl can be copied as-is.
 // The key shown here is the semtech default key.
-static const u1_t PROGMEM APPKEY[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+static const u1_t PROGMEM APPKEY[16] = { 0xFC, 0x3B, 0xF9, 0x11, 0xF1, 0x05, 0xB6, 0x10, 0xF3, 0x13, 0xDD, 0x12, 0x71, 0xB3, 0xAA, 0x95 };
 void os_getDevKey (u1_t* buf) {
   memcpy_P(buf, APPKEY, 16);
 }
@@ -74,8 +70,6 @@ extern const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM;
 
 static osjob_t sendjob;
 
-
-
 // global enviromental parameters : Place here the environment data you want to measure
 
 
@@ -84,8 +78,6 @@ static float batvalue = 0.0;
 static int LED_RED = 0;
 static int LED_BLUE = 0;
 static int LED_GREEN = 0;
-
-
 
 // Pin mapping for RFM95
 const lmic_pinmap lmic_pins = {
@@ -102,63 +94,7 @@ const lmic_pinmap lmic_pins = {
 
 // Schedule TX every this many seconds (might become longer due to duty
 // cycle limitations).
-unsigned int TX_INTERVAL = 300;
-
-void setDataRate() {
-  switch (LMIC.datarate) {
-    case DR_SF12:
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("Datarate: SF12"));
-    #endif      
-      TX_INTERVAL = 4800;
-      break;
-    case DR_SF11: 
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("Datarate: SF11"));
-    #endif
-      TX_INTERVAL = 2400;
-      break;
-    case DR_SF10: 
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("Datarate: SF10"));
-    #endif
-      TX_INTERVAL = 1200;
-      break;
-    case DR_SF9: 
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("Datarate: SF9"));
-    #endif
-      TX_INTERVAL = 600;
-      break;
-    case DR_SF8: 
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("Datarate: SF8"));
-    #endif
-      TX_INTERVAL = 360;
-      break;
-    case DR_SF7: 
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("Datarate: SF7"));
-    #endif
-      TX_INTERVAL = 30;
-      break;
-    case DR_SF7B: 
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("Datarate: SF7B"));
-    #endif
-      TX_INTERVAL = 180;
-      break;
-    case DR_FSK: 
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("Datarate: FSK"));
-    #endif
-      TX_INTERVAL = 180;
-      break;
-    default: debugPrint(F("Datarate Unknown Value: "));
-      debugPrintLn(LMIC.datarate); TX_INTERVAL = 600;
-      break;
-  }
-}
+unsigned int TX_INTERVAL = 5;
 
 void setColor(int redValue,  int blueValue, int greenValue) {
 
@@ -180,6 +116,13 @@ long readVcc() {
   return result;
 }
 
+void printHex2(unsigned v) {
+    v &= 0xff;
+    if (v < 16)
+        Serial.print('0');
+        Serial.print(v, HEX);
+}
+
 
 
 void updateEnvParameters() // place here your sensing
@@ -187,91 +130,93 @@ void updateEnvParameters() // place here your sensing
   
   batvalue = (int)(readVcc()/10);  // readVCC returns in tens of mVolt 
 
-  
-
-
-  #ifdef SHOW_DEBUGINFO
   // print out the value you read:
   Serial.print("Vbatt : ");
   Serial.println(batvalue);
-  #endif 
+
 }
 
 
 void onEvent (ev_t ev) {
-  #ifdef SHOW_DEBUGINFO
-  Serial.print(os_getTime());
-  Serial.print(": ");
-  #endif
+  
+  //Serial.print(os_getTime());
+  //Serial.print(": ");
+  
+ 
   switch (ev) {
-    case EV_SCAN_TIMEOUT:
-    #ifdef SHOW_DEBUGINFO
-  debugPrintLn(F("EV_SCAN_TIMEOUT"));
-  #endif
-     
+    case EV_SCAN_TIMEOUT:  
+  Serial.println(F("EV_SCAN_TIMEOUT"));     
       break;
-    case EV_BEACON_FOUND:
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("EV_BEACON_FOUND"));
-    #endif      
+    case EV_BEACON_FOUND:   
+   Serial.println(F("EV_BEACON_FOUND"));       
       break;
     case EV_BEACON_MISSED:
-      //debugPrintLn(F("EV_BEACON_MISSED"));
+     Serial.println(F("EV_BEACON_MISSED"));
       break;
     case EV_BEACON_TRACKED:
-      //debugPrintLn(F("EV_BEACON_TRACKED"));
+      Serial.println(F("EV_BEACON_TRACKED"));
       break;
     case EV_JOINING:
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("EV_JOINING"));
-    #endif
-    setColor(0, 0, 64);   //RED   
+    Serial.println(F("EV_JOINING"));
+    setColor(0, 0, 32);   //RED   
       break;
     case EV_JOINED:
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("EV_JOINED"));
-    #endif
-    setColor(64, 0, 0); //GREEN  
-      setDataRate();      
+    Serial.println(F("EV_JOINED"));   
+    setColor(32, 0, 0); //GREEN  
+     
+    {
+              u4_t netid = 0;
+              devaddr_t devaddr = 0;
+              u1_t nwkKey[16];
+              u1_t artKey[16];
+              LMIC_getSessionKeys(&netid, &devaddr, nwkKey, artKey);
+              Serial.print("netid: ");
+              Serial.println(netid, DEC);
+              Serial.print("devaddr: ");
+              Serial.println(devaddr, HEX);
+              Serial.print("AppSKey: ");
+              for (size_t i=0; i<sizeof(artKey); ++i) {
+                if (i != 0)
+                  Serial.print("-");
+                printHex2(artKey[i]);
+              }
+              Serial.println("");
+              Serial.print("NwkSKey: ");
+              for (size_t i=0; i<sizeof(nwkKey); ++i) {
+                      if (i != 0)
+                              Serial.print("-");
+                      printHex2(nwkKey[i]);
+              }
+              Serial.println();
+            }     
+
+            // Disable link check validation (automatically enabled
+            // during join, but because slow data rates change max TX
+      // size, we don't use it in this example.
+            LMIC_setLinkCheckMode(0);
       // Ok send our first data in 10 ms
-      os_setTimedCallback(&sendjob, os_getTime() + ms2osticks(10), do_send);
+      //os_setTimedCallback(&sendjob, os_getTime() + ms2osticks(10), do_send);
       break;
-    case EV_RFU1:
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("EV_RFU1"));
-    #endif
-      
-      break;
+         
+    
     case EV_JOIN_FAILED:
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("EV_JOIN_FAILED"));
-    #endif
-      
+    Serial.println(F("EV_JOIN_FAILED"));      
       lmicStartup(); //Reset LMIC and retry
       break;
     case EV_REJOIN_FAILED:
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("EV_REJOIN_FAILED"));
-    #endif
-      
+    Serial.println(F("EV_REJOIN_FAILED"));
+    
       lmicStartup(); //Reset LMIC and retry
       break;
     case EV_TXCOMPLETE:
-
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("EV_TXCOMPLETE (includes waiting for RX windows)"));
-    #endif
+    Serial.println(F("EV_TXCOMPLETE (includes waiting for RX windows)"));
       
-      if (LMIC.txrxFlags & TXRX_ACK)
-      #ifdef SHOW_DEBUGINFO
-      debugPrintLn(F("Received ack"));
-      #endif
-              
+      if (LMIC.txrxFlags & TXRX_ACK) 
+      Serial.print(F("Received ack"));              
       if (LMIC.dataLen) {
-        #ifdef SHOW_DEBUGINFO
-        debugPrint(F("Received "));
-        debugPrint(LMIC.dataLen/4);
-        debugPrintLn(F(" downlink(s)"));
+        Serial.print(F("Received "));
+        Serial.print(LMIC.dataLen);
+        Serial.println(F(" byte(s) downlink(s)"));
         for (int i = 0; i < LMIC.dataLen; i++) {
         if (LMIC.frame[LMIC.dataBeg + i] < 0x10) {
             Serial.print(F("0"));
@@ -279,91 +224,83 @@ void onEvent (ev_t ev) {
         Serial.print(LMIC.frame[LMIC.dataBeg + i], HEX);
     }
     Serial.println();
-    #endif 
-     
-      for(int i = 0; i < LMIC.dataLen/4;i++){
-        
-        switch (LMIC.frame[LMIC.dataBeg+4*i]){
-        case 0x06 :
-        LED_RED = (word(LMIC.frame[LMIC.dataBeg+1],LMIC.frame[LMIC.dataBeg+2])); // Converter download payload in int
-        #ifdef SHOW_DEBUGINFO
+            
+        switch (LMIC.frame[LMIC.dataBeg]){
+        case 0x01 :
+        LED_RED = (word(LMIC.frame[LMIC.dataBeg+1])); // Converter download payload in int
+        Serial.print("Set RED COLOR to :");
         Serial.println(LED_RED);
-        #endif
         break;
        
-        case 0x07 :
-        LED_BLUE = (word(LMIC.frame[LMIC.dataBeg+1],LMIC.frame[LMIC.dataBeg+2])); // Converter download payload in int
-        #ifdef SHOW_DEBUGINFO
+        case 0x02 :
+        LED_BLUE = (word(LMIC.frame[LMIC.dataBeg+1])); // Converter download payload in int
+        Serial.print("Set BLUE COLOR to :");
         Serial.println(LED_BLUE);
-        #endif
         break;
 
-        case 0x08 :
-        LED_GREEN = (word(LMIC.frame[LMIC.dataBeg+1],LMIC.frame[LMIC.dataBeg+2])); // Converter download payload in int
-        #ifdef SHOW_DEBUGINFO
+        case 0x03 :
+        LED_GREEN = (word(LMIC.frame[LMIC.dataBeg+1])); // Converter download payload in int
+        Serial.print("Set GREEN COLOR to :");
         Serial.println(LED_GREEN);
-        #endif
         break;
         }
-      }
-     }
-     delay(5);
+      
+     }  
+      delay(50);
       setColor(LED_GREEN*2.55, LED_BLUE*2.55, LED_RED*2.55);
-     
            
        // Schedule next transmission
-      setDataRate();
-      os_setCallback(&sendjob, do_send);
-      break;
+      os_setTimedCallback(&sendjob, os_getTime()+sec2osticks(TX_INTERVAL), do_send);
+            break;
     case EV_LOST_TSYNC:
-      #ifdef SHOW_DEBUGINFO
-      debugPrintLn(F("EV_LOST_TSYNC"));
-      #endif      
+      Serial.println(F("EV_LOST_TSYNC"));
       break;
     case EV_RESET:
-      #ifdef SHOW_DEBUGINFO
-      debugPrintLn(F("EV_RESET"));
-      #endif        
+      Serial.println(F("EV_RESET"));
+             
       break;
     case EV_RXCOMPLETE:
       // data received in ping slot
-      #ifdef SHOW_DEBUGINFO
-      debugPrintLn(F("EV_RXCOMPLETE"));
-      #endif      
+      Serial.println(F("EV_RXCOMPLETE"));        
       break;
     case EV_LINK_DEAD:
-      #ifdef SHOW_DEBUGINFO
-      debugPrintLn(F("EV_LINK_DEAD"));
-      #endif       
+      Serial.println(F("EV_LINK_DEAD"));
       break;
     case EV_LINK_ALIVE:
-      #ifdef SHOW_DEBUGINFO
-      debugPrintLn(F("EV_LINK_ALIVE"));
-      #endif       
+      Serial.println(F("EV_LINK_ALIVE"));
       break;
+    case EV_TXSTART:
+      Serial.println(F("EV_TXSTART"));
+       break;
+     case EV_TXCANCELED:
+      Serial.println(F("EV_TXCANCELED"));
+       break;
+     case EV_RXSTART:
+      /* do not print anything -- it wrecks timing */
+      break;
+     case EV_JOIN_TXCOMPLETE:
+       Serial.println(F("EV_JOIN_TXCOMPLETE: no JoinAccept"));
+        break;
+
     default:
-      #ifdef SHOW_DEBUGINFO
-      debugPrintLn(F("Unknown event"));
-      #endif      
+      Serial.println(F("Unknown event"));
       break;
   }
 }
 
 void do_send(osjob_t* j) {
   // Check if there is not a current TX/RX job running
+
+ 
   if (LMIC.opmode & OP_TXRXPEND) {
-    debugPrintLn(F("OP_TXRXPEND, not sending"));
+    Serial.println(F("OP_TXRXPEND, not sending"));
   } else {
     // Prepare upstream data transmission at the next possible time.
     // Here the sensor information should be retrieved
     
     updateEnvParameters(); // Sensing parameters are updated
-   
+  
 
-#ifdef SHOW_DEBUGINFO
-    debugPrint(F("BV="));
-    debugPrintLn(batvalue);
-#endif
 
 // Formatting for Cayenne LPP
     
@@ -389,7 +326,7 @@ void do_send(osjob_t* j) {
     mydata[15] = LED_GREEN & 0xFF;
     
     LMIC_setTxData2(1, mydata, sizeof(mydata), 0);
-    debugPrintLn(F("PQ")); //Packet queued
+    Serial.println(F("Packet queued")); //Packet queued
   }
   // Next TX is scheduled after TX_COMPLETE event.
 }
@@ -401,11 +338,8 @@ void lmicStartup() {
 
     LMIC_setLinkCheckMode(1);
     LMIC_setAdrMode(1);
-    LMIC_setClockError(MAX_CLOCK_ERROR * 1 / 100); // Increase window time for clock accuracy problem
-  
-  
+    LMIC_setClockError(MAX_CLOCK_ERROR * 2 / 100); // Increase window time for clock accuracy problem
 
-  
   // Start job (sending automatically starts OTAA too)
   // Join the network, sending will be
   // started after the event "Joined"
@@ -423,21 +357,17 @@ void setup() {
 
   FastLED.addLeds<LED_TYPE, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
   
-  #ifdef SHOW_DEBUGINFO
-  debugPrintLn(F("Starting"));
+  
+  Serial.println(F("Starting"));
   delay(100);
-  #endif
+  
   
   Wire.begin();
-
-  
-  updateEnvParameters(); // To have value for the first Tx
-  
 
   // LMIC init
 
   os_init();
-  lmicStartup();  
+  LMIC_reset(); 
   /* This function is intended to compensate for clock inaccuracy (up to ±10% in this example), 
     but that also works to compensate for inaccuracies due to software delays. 
     The downside of this compensation is a longer receive window, which means a higher battery drain. 
@@ -445,6 +375,9 @@ void setup() {
     often 1% works well already. */
     
     LMIC_setClockError(MAX_CLOCK_ERROR * 2 / 100);
+
+    // Start job (sending automatically starts OTAA too)
+    do_send(&sendjob);
 
 }
 

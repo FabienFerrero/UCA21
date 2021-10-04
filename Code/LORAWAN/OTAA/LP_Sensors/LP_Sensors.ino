@@ -110,7 +110,7 @@ const lmic_pinmap lmic_pins = {
 
 // Schedule TX every this many seconds (might become longer due to duty
 // cycle limitations).
-unsigned int TX_INTERVAL = 300;
+unsigned int TX_INTERVAL = 30;
 
 void setDataRate() {
   switch (LMIC.datarate) {
