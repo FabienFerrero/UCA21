@@ -180,6 +180,8 @@ void do_sleep(unsigned int sleepyTime) {
   unsigned int twos = ((sleepyTime % 8) % 4) / 2;
   unsigned int ones = ((sleepyTime % 8) % 4) % 2;
 
+  digitalWrite(7, LOW); // switch off Vcc_Periph LDO 
+
 #ifdef SHOW_DEBUGINFO
   Serial.print(F("Sleeping for "));
   Serial.print(sleepyTime);
@@ -194,6 +196,7 @@ void do_sleep(unsigned int sleepyTime) {
   delay(500); //Wait for serial to complete
 #endif
 
+   Serial.end(); // switch off serial
 
   for ( int x = 0; x < eights; x++) {
     // put the processor to sleep for 8 seconds
@@ -212,6 +215,13 @@ void do_sleep(unsigned int sleepyTime) {
     LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
   }
   addMillis(sleepyTime * 1000);
+
+  digitalWrite(7, HIGH); // switch ON Vcc_Periph LDO
+
+  Serial.begin(115200); // restart Serial 
+
+  delay(100);
+  
 }
 
 
@@ -507,9 +517,12 @@ void lmicStartup() {
 
 void setup() {
   Serial.begin(115200);
-  delay(1000); //Wait 1s in order to avoid UART programmer issues when a battery is used
+
+  pinMode(7, OUTPUT); // LDO control for low power mode
+  digitalWrite(7, HIGH);
   
-   
+  delay(1000); //Wait 1s in order to avoid UART programmer issues when a battery is used
+
   #ifdef SHOW_DEBUGINFO
   Serial.println(F("Starting"));
   delay(100);
