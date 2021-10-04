@@ -16,7 +16,7 @@ This board was developed for education to support courses on embedded software, 
 - Optimized sleep mode to 5uA
 - VSWR meter
 
-<img src="https://github.com/FabienFerrero/UCA_Education_Board/blob/master/Doc/Pictures/UCA_logo.png">
+<img src="https://github.com/FabienFerrero/UCA21/blob/main/Doc/Pictures/UCA_logo.png">
 
 The board is fabricated by RFThings.
 
