@@ -16,7 +16,7 @@ This board was developed for education to support courses on embedded software, 
 - Optimized sleep mode to 5uA
 - VSWR meter
 
-<img src="https://github.com/FabienFerrero/UCA21/blob/main/Doc/Pictures/UCA_logo.png">
+
 
 The board is fabricated by RFThings.
 
@@ -70,5 +70,7 @@ The schematic of the PCB is available the Schematic section.
 
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+<img src="https://github.com/FabienFerrero/UCA21/blob/main/Doc/Pictures/UCA_logo.png">
 
 Maintained by Fabien Ferrero and Trinh Le Huy
