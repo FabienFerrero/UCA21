@@ -69,13 +69,13 @@ static const u1_t PROGMEM APPEUI[8]={ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 void os_getArtEui (u1_t* buf) { memcpy_P(buf, APPEUI, 8);}
 
 // This should also be in little endian format, see above.
-static const u1_t PROGMEM DEVEUI[8]={ 0x97, 0x4C, 0x04, 0xD0, 0x7E, 0xD5, 0xB3, 0x70 };
+static const u1_t PROGMEM DEVEUI[8]={ 0xB3, 0x62, 0x04, 0xD0, 0x7E, 0xD5, 0xB3, 0x70 };
 void os_getDevEui (u1_t* buf) { memcpy_P(buf, DEVEUI, 8);}
 
 // This key should be in big endian format (or, since it is not really a
 // number but a block of memory, endianness does not really apply). In
 // practice, a key taken from ttnctl can be copied as-is.
-static const u1_t PROGMEM APPKEY[16] = { 0xFC, 0x3B, 0xF9, 0x11, 0xF1, 0x05, 0xB6, 0x10, 0xF3, 0x13, 0xDD, 0x12, 0x71, 0xB3, 0xAA, 0x95 };
+static const u1_t PROGMEM APPKEY[16] = { 0x1E, 0x5B, 0xDA, 0x2D, 0xEE, 0xB5, 0x74, 0xAA, 0xB6, 0x69, 0xDA, 0x6C, 0xE6, 0x2C, 0xBB, 0x1A };
 void os_getDevKey (u1_t* buf) {  memcpy_P(buf, APPKEY, 16);}
 
 
@@ -83,7 +83,7 @@ void os_getDevKey (u1_t* buf) {  memcpy_P(buf, APPKEY, 16);}
 static osjob_t sendjob;
 
 // global enviromental parameters
-static float temp = 0.0;
+static float temperature = 0.0;
 //static float pressure = 0.0;
 static float humidity = 0.0;
 static float batvalue;
@@ -245,7 +245,8 @@ float readLight() {
 void updateEnvParameters()
 {
  
-  temp = s.readTempC();
+  temperature = s.readTempC();
+  delay(10); // add delay to finish I2C read
   humidity = s.readHumidity();
   light = readLight();
   batvalue = (int)(readVcc()/10);  // readVCC returns in tens of mVolt 
@@ -260,12 +261,12 @@ void updateEnvParameters()
 
   #ifdef SHOW_DEBUGINFO
   // print out the value you read:
-  Serial.print("Sensors values : temp = ");
-            Serial.print( temp);
+            Serial.print("Sensors values : temp = ");
+            Serial.print( temperature);
             Serial.print("deg, hum= ");
             Serial.print( humidity);
-            Serial.print("%, lum = ");
-            Serial.print( light);
+            Serial.print("%, lum = ");            
+            Serial.print( light);            
             Serial.print(" lumen, Accel : X = ");
             Serial.print( a_x);
             Serial.print(" G, Y = ");
@@ -273,6 +274,8 @@ void updateEnvParameters()
             Serial.print(" G, Z = ");
             Serial.print( a_z);
             Serial.println(" G");
+
+            
   #endif
   
 }
@@ -292,15 +295,14 @@ void onEvent (ev_t ev) {
   #endif
   switch (ev) {
     case EV_SCAN_TIMEOUT:
-    #ifdef SHOW_DEBUGINFO
-  debugPrintLn(F("EV_SCAN_TIMEOUT"));
-  #endif
-     
+      #ifdef SHOW_DEBUGINFO
+      debugPrintLn(F("EV_SCAN_TIMEOUT"));
+      #endif     
       break;
     case EV_BEACON_FOUND:
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("EV_BEACON_FOUND"));
-    #endif      
+      #ifdef SHOW_DEBUGINFO
+      debugPrintLn(F("EV_BEACON_FOUND"));
+      #endif      
       break;
     case EV_BEACON_MISSED:
       //debugPrintLn(F("EV_BEACON_MISSED"));
@@ -309,15 +311,14 @@ void onEvent (ev_t ev) {
       //debugPrintLn(F("EV_BEACON_TRACKED"));
       break;
     case EV_JOINING:
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("EV_JOINING"));
-    #endif      
+      #ifdef SHOW_DEBUGINFO
+      debugPrintLn(F("EV_JOINING"));
+      #endif      
       break;
     case EV_JOINED:
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("EV_JOINED"));
-    setDataRate();  // adapt SF
-            {
+      #ifdef SHOW_DEBUGINFO
+      debugPrintLn(F("EV_JOINED"));
+                  {
               u4_t netid = 0;
               devaddr_t devaddr = 0;
               u1_t nwkKey[16];
@@ -342,22 +343,18 @@ void onEvent (ev_t ev) {
               }
               Serial.println();
             }
-           
-    #endif      
-      setDataRate(); 
-      // Disable link check validation (automatically enabled
+         #endif
+         setDataRate();  // adapt SF    
+            // Disable link check validation (automatically enabled
             // during join, but because slow data rates change max TX
-      // size, we don't use it in this example.
-            LMIC_setLinkCheckMode(0);     
-      // Ok send our first data in 10 ms
-      os_setTimedCallback(&sendjob, os_getTime() + ms2osticks(10), do_send);
-      break;
-    case EV_RFU1:
-    #ifdef SHOW_DEBUGINFO
-    debugPrintLn(F("EV_RFU1"));
-    #endif
+            // size, we don't use it in this example.
+           // LMIC_setLinkCheckMode(0);           
+         
       
+      // Ok send our first data in 10 ms
+      //os_setTimedCallback(&sendjob, os_getTime() + ms2osticks(10), do_send);
       break;
+       
     case EV_JOIN_FAILED:
     #ifdef SHOW_DEBUGINFO
     debugPrintLn(F("EV_JOIN_FAILED"));
@@ -372,6 +369,7 @@ void onEvent (ev_t ev) {
       
       lmicStartup(); //Reset LMIC and retry
       break;
+    
     case EV_TXCOMPLETE:
 
     #ifdef SHOW_DEBUGINFO
@@ -429,6 +427,20 @@ void onEvent (ev_t ev) {
       debugPrintLn(F("EV_LINK_ALIVE"));
       #endif       
       break;
+      case EV_TXSTART:
+            #ifdef SHOW_DEBUGINFO
+            Serial.println(F("EV_TXSTART"));
+            #endif
+    break;
+    case EV_TXCANCELED:
+            Serial.println(F("EV_TXCANCELED"));
+            break;
+        case EV_RXSTART:
+            /* do not print anything -- it wrecks timing */
+            break;
+        case EV_JOIN_TXCOMPLETE:
+            Serial.println(F("EV_JOIN_TXCOMPLETE: no JoinAccept"));
+            break;    
     default:
       #ifdef SHOW_DEBUGINFO
       debugPrintLn(F("Unknown event"));
@@ -451,7 +463,7 @@ void do_send(osjob_t* j) {
 
 #ifdef SHOW_DEBUGINFO
     debugPrint(F("T="));
-    debugPrintLn(temp);
+    debugPrintLn(temperature);
 
     debugPrint(F("H="));
     debugPrintLn(humidity);
@@ -460,7 +472,7 @@ void do_send(osjob_t* j) {
     debugPrint(F("BV="));
     debugPrintLn(batvalue);
 #endif
-    int t = (int)((temp) * 10.0); // adapt to Cayenne format
+    int t = (int)((temperature) * 10.0); // adapt to Cayenne format
     int h = (int)(humidity * 2.0); // adapt to Cayenne format
     int bat = batvalue; 
     int l = light; // light sensor in Lx
@@ -502,7 +514,7 @@ void lmicStartup() {
 
   LMIC_setLinkCheckMode(1);
   LMIC_setAdrMode(1);
-  LMIC_setClockError(MAX_CLOCK_ERROR * 1 / 100); // Increase window time for clock accuracy problem
+  LMIC_setClockError(MAX_CLOCK_ERROR * 2 / 100); // Increase window time for clock accuracy problem
   
 
   // Start job (sending automatically starts OTAA too)
@@ -515,8 +527,7 @@ void setup() {
   Serial.begin(115200);
   delay(1000); //Wait 1s in order to avoid UART programmer issues when a battery is used
   
-  Serial.begin(115200);
-  
+   
   #ifdef SHOW_DEBUGINFO
   debugPrintLn(F("Starting"));
   delay(100);
@@ -544,15 +555,22 @@ void setup() {
 
   // LMIC init
   os_init();
-  lmicStartup();
+  // Reset the MAC state. Session and pending data transfers will be discarded.
+    LMIC_reset();    
+    LMIC_setLinkCheckMode(1);
+    LMIC_setAdrMode(1);
 
-  /* This function is intended to compensate for clock inaccuracy (up to ±10% in this example), 
+     /* This function is intended to compensate for clock inaccuracy (up to ±10% in this example), 
     but that also works to compensate for inaccuracies due to software delays. 
     The downside of this compensation is a longer receive window, which means a higher battery drain. 
     So if this helps, you might want to try to lower the percentage (i.e. lower the 10 in the above call), 
     often 1% works well already. */
     
     LMIC_setClockError(MAX_CLOCK_ERROR * 2 / 100);
+
+    // Start job (sending automatically starts OTAA too)
+    do_send(&sendjob);
+
 
 }
 
