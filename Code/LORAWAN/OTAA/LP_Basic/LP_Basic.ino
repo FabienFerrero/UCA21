@@ -41,22 +41,30 @@
 
 #define SHOW_LED
 
+//Commented out keys have been zeroed for github
+
 // This EUI must be in little-endian format, so least-significant-byte
 // first. When copying an EUI from ttnctl output, this means to reverse
 // the bytes. For TTN issued EUIs the last bytes should be 0xD5, 0xB3,
 // 0x70.
-static const u1_t PROGMEM APPEUI[8]={ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-void os_getArtEui (u1_t* buf) { memcpy_P(buf, APPEUI, 8);}
+static const u1_t PROGMEM APPEUI[8] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+void os_getArtEui (u1_t* buf) {
+  memcpy_P(buf, APPEUI, 8);
+}
 
 // This should also be in little endian format, see above.
-static const u1_t PROGMEM DEVEUI[8]={ 0x97, 0x4C, 0x04, 0xD0, 0x7E, 0xD5, 0xB3, 0x70 };
-void os_getDevEui (u1_t* buf) { memcpy_P(buf, DEVEUI, 8);}
+static const u1_t PROGMEM DEVEUI[8] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+void os_getDevEui (u1_t* buf) {
+  memcpy_P(buf, DEVEUI, 8);
+}
 
 // This key should be in big endian format (or, since it is not really a
 // number but a block of memory, endianness does not really apply). In
 // practice, a key taken from ttnctl can be copied as-is.
-static const u1_t PROGMEM APPKEY[16] = { 0xFC, 0x3B, 0xF9, 0x11, 0xF1, 0x05, 0xB6, 0x10, 0xF3, 0x13, 0xDD, 0x12, 0x71, 0xB3, 0xAA, 0x95 };
-void os_getDevKey (u1_t* buf) {  memcpy_P(buf, APPKEY, 16);}
+// The key shown here is the semtech default key.
+static const u1_t PROGMEM APPKEY[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+void os_getDevKey (u1_t* buf) {
+  memcpy_P(buf, APPKEY, 16);
 
 // LED control
 #include <FastLED.h>

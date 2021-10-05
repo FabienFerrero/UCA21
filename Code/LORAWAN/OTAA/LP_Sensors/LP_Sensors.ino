@@ -55,25 +55,31 @@ float   sampleRate = 6.25;  // HZ - Samples per second - 0.781, 1.563, 3.125, 6.
 uint8_t accelRange = 2;     // Accelerometer range = 2, 4, 8, 16g
 
 
-//Commented out keys have been zeroed for github - the lines can be copied to a keys.h file and real keys inserted
-
+///Commented out keys have been zeroed for github
 
 // This EUI must be in little-endian format, so least-significant-byte
 // first. When copying an EUI from ttnctl output, this means to reverse
 // the bytes. For TTN issued EUIs the last bytes should be 0xD5, 0xB3,
 // 0x70.
-static const u1_t PROGMEM APPEUI[8]={ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-void os_getArtEui (u1_t* buf) { memcpy_P(buf, APPEUI, 8);}
+static const u1_t PROGMEM APPEUI[8] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+void os_getArtEui (u1_t* buf) {
+  memcpy_P(buf, APPEUI, 8);
+}
 
 // This should also be in little endian format, see above.
-static const u1_t PROGMEM DEVEUI[8]={ 0xB3, 0x62, 0x04, 0xD0, 0x7E, 0xD5, 0xB3, 0x70 };
-void os_getDevEui (u1_t* buf) { memcpy_P(buf, DEVEUI, 8);}
+static const u1_t PROGMEM DEVEUI[8] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+void os_getDevEui (u1_t* buf) {
+  memcpy_P(buf, DEVEUI, 8);
+}
 
 // This key should be in big endian format (or, since it is not really a
 // number but a block of memory, endianness does not really apply). In
 // practice, a key taken from ttnctl can be copied as-is.
-static const u1_t PROGMEM APPKEY[16] = { 0x1E, 0x5B, 0xDA, 0x2D, 0xEE, 0xB5, 0x74, 0xAA, 0xB6, 0x69, 0xDA, 0x6C, 0xE6, 0x2C, 0xBB, 0x1A };
-void os_getDevKey (u1_t* buf) {  memcpy_P(buf, APPKEY, 16);}
+// The key shown here is the semtech default key.
+static const u1_t PROGMEM APPKEY[16] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+void os_getDevKey (u1_t* buf) {
+  memcpy_P(buf, APPKEY, 16);
+}
 
 
 
@@ -84,7 +90,7 @@ static float temperature = 0.0;
 //static float pressure = 0.0;
 static float humidity = 0.0;
 static float batvalue;
-static float light;
+static double light;
 static int16_t a_x = 0; // acclerometer
 static int16_t a_y = 0;
 static int16_t a_z = 0;
@@ -238,24 +244,14 @@ long readVcc() {
   return result;
 }
 
-float readLight() {
-  double result;
-        unsigned int data0, data1;
-        lightsensor.getData(data0,data1);
-    
-    // Perform lux calculation:
-
-    lightsensor.getLux(0,1,data0,data1,result);  
-            return result;
-}
-
 void updateEnvParameters()
 {
- 
+  unsigned int data0, data1;
   temperature = s.readTempC();
   delay(10); // add delay to finish I2C read
   humidity = s.readHumidity();
-  light = readLight();
+  delay(10); // add delay to finish I2C read
+  
   batvalue = (int)(readVcc()/10);  // readVCC returns in tens of mVolt 
   int16_t dataHighres = 0;
   if( myIMU.readRegisterInt16( &dataHighres, KXTJ3_OUT_X_L ) == 0 ){}
@@ -264,7 +260,16 @@ void updateEnvParameters()
   a_y = dataHighres/16.384;
   if( myIMU.readRegisterInt16( &dataHighres, KXTJ3_OUT_Z_L ) == 0 ){}
   a_z = dataHighres/16.384;
-    
+
+  lightsensor.setControl(0, false, false);
+  lightsensor.setMeasurementRate(1,3);
+  lightsensor.setPowerUp(); // power-up light sensor
+  
+  delay(200);// delay to respect integration time
+  lightsensor.getData(data0,data1);  
+  // Perform lux calculation:
+  lightsensor.getLux(0,1,data0,data1,light); 
+  
 
   #ifdef SHOW_DEBUGINFO
   // print out the value you read:
@@ -280,9 +285,7 @@ void updateEnvParameters()
             Serial.print( a_y);
             Serial.print(" G, Z = ");
             Serial.print( a_z);
-            Serial.println(" G");
-
-            
+            Serial.println(" G");          
   #endif
   
 }
@@ -531,8 +534,9 @@ void setup() {
   Wire.begin();
   s.begin(true);
   // Set-up sensors
-    lightsensor.begin();    
-    lightsensor.setPowerUp();
+
+  lightsensor.begin(); 
+    
 
     if( myIMU.begin(sampleRate, accelRange) != 0 )
   {

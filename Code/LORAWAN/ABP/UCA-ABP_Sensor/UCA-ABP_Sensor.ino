@@ -46,18 +46,20 @@ uint8_t accelRange = 2;     // Accelerometer range = 2, 4, 8, 16g
 
 // Global variables:
 
-static const u4_t DEVADDR = 0x260B78D1;
+// LoRaWAN end-device address (DevAddr)
+
+static const u4_t DEVADDR = 0x00000000;
 
 // LoRaWAN NwkSKey, network session key
 // This is the default Semtech key, which is used by the early prototype TTN
 // network.
-static const PROGMEM u1_t NWKSKEY[16] = { 0xB9, 0xB9, 0x29, 0x49, 0x94, 0xE2, 0xBF, 0x1C, 0xD0, 0x2D, 0xD0, 0xB2, 0xE3, 0x63, 0x06, 0xC9 };
+static const PROGMEM u1_t NWKSKEY[16] = {  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 
 // LoRaWAN AppSKey, application session key
 // This is the default Semtech key, which is used by the early prototype TTN
 // network.
-static const u1_t PROGMEM APPSKEY[16] = {  0xAE, 0xB1, 0xC4, 0x7F, 0x29, 0xFB, 0xD2, 0xC7, 0xD1, 0x58, 0xCA, 0x5A, 0x67, 0x40, 0x91, 0x60};
+static const u1_t PROGMEM APPSKEY[16] = {  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 
 // These callbacks are only used in over-the-air activation, so they are
@@ -179,8 +181,6 @@ double readLight() {
 
 
 void onEvent (ev_t ev) {
-    Serial.print(os_getTime());
-    Serial.print(": ");
     switch(ev) {
         case EV_SCAN_TIMEOUT:
             Serial.println(F("EV_SCAN_TIMEOUT"));

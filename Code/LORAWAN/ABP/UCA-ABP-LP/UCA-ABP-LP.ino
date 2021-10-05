@@ -39,24 +39,20 @@
 
 
 
-
-//Define sensor PIN
-#define LAPIN A3 // PIN with Light sensor analog output 
-#define LPPIN 5 // PIN with Light power input
-
 // LoRaWAN end-device address (DevAddr)
-static const u4_t DEVADDR = 0x2601162F;
+
+static const u4_t DEVADDR = 0x00000000;
 
 // LoRaWAN NwkSKey, network session key
 // This is the default Semtech key, which is used by the early prototype TTN
 // network.
-static const PROGMEM u1_t NWKSKEY[16] = { 0xD7, 0x6C, 0x09, 0xE9, 0xD4, 0x80, 0x45, 0xFC, 0xB7, 0x92, 0x70, 0x17, 0x39, 0x85, 0x1F, 0x02 };
+static const PROGMEM u1_t NWKSKEY[16] = {  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 
 // LoRaWAN AppSKey, application session key
 // This is the default Semtech key, which is used by the early prototype TTN
 // network.
-static const u1_t PROGMEM APPSKEY[16] = { 0x85, 0x43, 0xEB, 0x8C, 0x13, 0xC9, 0x7A, 0xB8, 0x8A, 0x57, 0x77, 0xEE, 0xFD, 0x57, 0x05, 0xAE };
+static const u1_t PROGMEM APPSKEY[16] = {  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 // These callbacks are only used in over-the-air activation, so they are
 // left empty here (we cannot leave them out completely unless
@@ -66,8 +62,6 @@ void os_getDevEui (u1_t* buf) { }
 void os_getDevKey (u1_t* buf) { }
 
 static osjob_t sendjob;
-
-
 
 // global enviromental parameters (exemples)
 static float temp = 0.0;
@@ -399,12 +393,12 @@ void setup() {
     LMIC_setupChannel(0, 868100000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
     LMIC_setupChannel(1, 868300000, DR_RANGE_MAP(DR_SF12, DR_SF7B), BAND_CENTI);      // g-band
     LMIC_setupChannel(2, 868500000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
-    LMIC_setupChannel(3, 867100000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
-    LMIC_setupChannel(4, 867300000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
-    LMIC_setupChannel(5, 867500000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
-    LMIC_setupChannel(6, 867700000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
-    LMIC_setupChannel(7, 867900000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
-    LMIC_setupChannel(8, 868800000, DR_RANGE_MAP(DR_FSK,  DR_FSK),  BAND_MILLI);      // g2-band
+    //LMIC_setupChannel(3, 867100000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
+    //LMIC_setupChannel(4, 867300000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
+    //LMIC_setupChannel(5, 867500000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
+    //LMIC_setupChannel(6, 867700000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
+    //LMIC_setupChannel(7, 867900000, DR_RANGE_MAP(DR_SF12, DR_SF7),  BAND_CENTI);      // g-band
+    //LMIC_setupChannel(8, 868800000, DR_RANGE_MAP(DR_FSK,  DR_FSK),  BAND_MILLI);      // g2-band
     
     #elif defined(CFG_VN)
     // Set up the 8 channels used    
