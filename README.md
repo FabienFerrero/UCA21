@@ -40,7 +40,7 @@ The board is fabricated by RFThings.
 
  ```
  
- <img src="https://github.com/FabienFerrero/UCA_Education_Board/blob/master/Doc/Pictures/pinout_UCA.png">
+ <img src="https://github.com/FabienFerrero/UCA21/blob/master/Doc/Pictures/pinout_UCA.png">
  
  
 # USB Driver
@@ -48,7 +48,7 @@ The board is using CH340C chip for USB to
 You may need to install the driver to use the board:
 https://sparks.gogo.co.nz/ch340.html
 
-<img src="https://github.com/FabienFerrero/UCA_Education_Board/blob/master/Doc/Pictures/usb.png">
+<img src="https://github.com/FabienFerrero/UCA21/blob/master/Doc/Pictures/usb.png">
 
 # Board Programming - Board Manager
 
