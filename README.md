@@ -48,7 +48,7 @@ The board is using CH340C chip for USB to
 You may need to install the driver to use the board:
 https://sparks.gogo.co.nz/ch340.html
 
-<img src="https://github.com/FabienFerrero/UCA21/blob/master/Doc/Pictures/usb.png">
+<img src="https://github.com/FabienFerrero/UCA21/blob/18ce02a330d579ff79cec318990150716ca1bb1d/Doc/Pictures/board.png">
 
 # Board Programming - Board Manager
 
