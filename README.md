@@ -16,9 +16,9 @@ This board was developed for education to support courses on embedded software, 
 - Optimized sleep mode to 5uA
 - VSWR meter
 
-
-
 The board is fabricated by RFThings.
+
+<img src="https://github.com/FabienFerrero/UCA21/blob/18ce02a330d579ff79cec318990150716ca1bb1d/Doc/Pictures/board.png">
 
 # Wiring
 
@@ -48,7 +48,10 @@ The board is using CH340C chip for USB to
 You may need to install the driver to use the board:
 https://sparks.gogo.co.nz/ch340.html
 
-<img src="https://github.com/FabienFerrero/UCA21/blob/18ce02a330d579ff79cec318990150716ca1bb1d/Doc/Pictures/board.png">
+
+<img src="https://github.com/FabienFerrero/UCA21/blob/69574b64fd2e3864930b67a356f340c04faa4418/Doc/Pictures/usb.png">
+
+
 
 # Board Programming - Board Manager
 
