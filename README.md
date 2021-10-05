@@ -1,7 +1,7 @@
 # UCA_Education_Board version 2021
 Board for Education
 
-Version 1.0.0, September, 2021
+Version 1.0.1, September, 2021
 
 Author: Fabien Ferrero and Trinh Le Huy
 
