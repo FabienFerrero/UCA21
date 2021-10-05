@@ -40,7 +40,7 @@ The board is fabricated by RFThings.
 
  ```
  
- <img src="https://github.com/FabienFerrero/UCA21/blob/master/Doc/Pictures/pinout_UCA.png">
+ <img src="https://github.com/FabienFerrero/UCA21/blob/522868ad4d04c523dc64f552ade44d6143326396/Doc/Pictures/pinout_UCA.png">
  
  
 # USB Driver
