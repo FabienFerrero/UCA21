@@ -44,8 +44,7 @@ The board is fabricated by RFThings.
  
  
 # USB Driver
-The board is using CH340C chip for USB to 
-You may need to install the driver to use the board:
+The board is using CH340C chip for USB. You may need to install the driver to use the board:
 https://sparks.gogo.co.nz/ch340.html
 
 
