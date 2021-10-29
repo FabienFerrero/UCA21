@@ -12,3 +12,12 @@ logMsgs[0]=({payload: {
                  });
 return logMsgs;
 ```
+
+
+
+JSON funtion to extract a value TTN V3 MQTT packet in Node-red and plot it in dashboard :
+```
+var tmp = {};
+tmp.payload = msg.payload.uplink_message.decoded_payload.luminosity_4;
+return tmp;
+```
