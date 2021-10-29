@@ -1,4 +1,4 @@
-JSON code :
+JSON funtion to decode TTN V3 MQTT packet in Node-red :
 
 ```
 var logMsgs = [];
