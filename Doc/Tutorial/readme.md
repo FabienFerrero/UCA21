@@ -1,3 +1,6 @@
+JSON code :
+
+```
 var logMsgs = [];
 logMsgs[0]=({payload: {
     rssi: msg.payload.uplink_message.rx_metadata[0].rssi,
@@ -9,3 +12,4 @@ logMsgs[0]=({payload: {
                  });
    //}
 return logMsgs;
+```
