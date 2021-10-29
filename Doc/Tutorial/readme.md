@@ -10,6 +10,5 @@ logMsgs[0]=({payload: {
     luminosity: msg.payload.uplink_message.decoded_payload.luminosity_4
                             }
                  });
-   //}
 return logMsgs;
 ```
