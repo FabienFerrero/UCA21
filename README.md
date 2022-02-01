@@ -11,7 +11,7 @@ This board was developed for education to support courses on embedded software, 
 - Lithium battery charger + JST-PH 2pin and 3pin connector : MCP73831
 - Accelerometer sensor : KXTJ3-1057
 - Temp/Humidity sensor : SHTC3
-- Light sensor : TR-303A
+- Light sensor : LTR-303A
 - 21 RGB Leds : WS2812-2020
 - Optimized sleep mode to 5uA
 - VSWR meter
