@@ -57,11 +57,15 @@ https://sparks.gogo.co.nz/ch340.html
  1. [Download and install the Arduino IDE](https://www.arduino.cc/en/Main/Software) (at least version v1.6.8)
  2. Start the Arduino IDE
  3. Go into Preferences
- 4. Add ```https://rfthings.github.io/ArduinoBoardManagerJSON/package_rfthings-avr_index.json``` as an "Additional Board Manager URL"
- 5. Open the Boards Manager from the Tools -> Board menu and install "RFTHings AVR Boards by RFThings Vietnam"
- 6. Select your RFTHings UCA board from the Tools -> Board menu
- 7. Select Board version "3.9 and newer : AT328PB" from the Tools -> Board menu
- 8. Select the port
+  Add 
+ ```
+ https://rfthings.github.io/ArduinoBoardManagerJSON/package_rfthings-avr_index.json
+ ```
+ as an "Additional Board Manager URL"
+ 4. Open the Boards Manager from the Tools -> Board menu and install "RFTHings AVR Boards by RFThings Vietnam"
+ 5. Select your RFTHings UCA board from the Tools -> Board menu
+ 6. Select Board version "3.9 and newer : AT328PB" from the Tools -> Board menu
+ 7. Select the port
 
 # Schematic
 
