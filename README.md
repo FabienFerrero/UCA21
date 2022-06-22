@@ -62,6 +62,7 @@ https://sparks.gogo.co.nz/ch340.html
  https://rfthings.github.io/ArduinoBoardManagerJSON/package_rfthings-avr_index.json
  ```
  as an "Additional Board Manager URL"
+ 
  4. Open the Boards Manager from the Tools -> Board menu and install "RFTHings AVR Boards by RFThings Vietnam"
  5. Select your RFTHings UCA board from the Tools -> Board menu
  6. Select Board version "3.9 and newer : AT328PB" from the Tools -> Board menu
