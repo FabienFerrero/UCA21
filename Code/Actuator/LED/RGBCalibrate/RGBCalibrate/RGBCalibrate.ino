@@ -13,18 +13,13 @@
 // * (Optional) if using software SPI for chipsets that are SPI based, define CLOCK_PIN to the clock pin
 // * Compile/upload/run the sketch
 
-// You should see six leds on.  If the RGB ordering is correct, you should see 1 red led, 2 green
-// leds, and 3 blue leds.  If you see different colors, the count of each color tells you what the
-// position for that color in the rgb orering should be.  So, for example, if you see 1 Blue, and 2
-// Red, and 3 Green leds then the rgb ordering should be BRG (Blue, Red, Green).
-
 // You can then test this ordering by setting the RGB ordering in the addLeds line below to the new ordering
 // and it should come out correctly, 1 red, 2 green, and 3 blue.
 //
 //////////////////////////////////////////////////
 
 #include "LowPower.h"
-#include <LoRa.h>
+
 
 #define NUM_LEDS 21
 
@@ -34,7 +29,7 @@
 //#define CLOCK_PIN 8
 
 CRGB leds[NUM_LEDS];
-int lum = 63;
+int lum = 20;
 
 void setup() {
     // sanity check delay - allows reprogramming if accidently blowing power w/leds
@@ -47,18 +42,21 @@ void setup() {
 }
 
 void loop() {
-  LoRa.sleep(); // move LoRa transciever in Sleep mode
-    leds[0] = CRGB(0,0,0);
-    leds[1] = CRGB(0,0,0);
-    leds[2] = CRGB(0,0,0);
-    leds[3] = CRGB(0,0,0);
-    leds[4] = CRGB(0,0,0);
-    leds[5] = CRGB(0,0,0);
-    leds[6] = CRGB(0,0,0);
-    leds[7] = CRGB(0,0,0);
-    leds[8] = CRGB(0,0,0);
+    leds[0] = CRGB(lum,lum,lum);
+    leds[1] = CRGB(lum,lum,lum);
+    leds[2] = CRGB(lum,lum,lum);
+    leds[3] = CRGB(lum,lum,lum);
+    leds[4] = CRGB(lum,lum,lum);
+    leds[5] = CRGB(lum,lum,lum);
+    leds[6] = CRGB(lum,lum,lum);
+    leds[7] = CRGB(lum,lum,lum);
+    leds[8] = CRGB(lum,lum,lum);
+    leds[10] = CRGB(30,10,50);
+    leds[12] = CRGB(20,40,20);
+    leds[14] = CRGB(30,10,0);
+    
     FastLED.show();
-    do_sleep(5);
+    delay(3000);
     leds[0] = CRGB(lum,0,0);
     leds[1] = CRGB(0,lum,0);
     leds[2] = CRGB(0,lum,lum);
