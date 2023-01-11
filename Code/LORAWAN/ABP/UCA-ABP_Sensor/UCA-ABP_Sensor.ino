@@ -261,6 +261,7 @@ void do_send(osjob_t* j){
     } 
     
     else {      
+            s.begin(true);
             int t = s.readTempC()*10;
             int h = s.readHumidity()*2;
             int bat = (int)(readVcc()/10); // multiply by 10 for V in Cayenne
