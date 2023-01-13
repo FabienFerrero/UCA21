@@ -23,9 +23,7 @@
 #define CFG_EU 1
 //#define CFG_VN 1
 
-
 #define PDPIN 3  // PIN with PIR Sensor Digital output
-
 
 //#define SHOW_DEBUGINFO
 
@@ -74,10 +72,9 @@ void os_getDevKey (u1_t* buf) { }
 
 static osjob_t sendjob;
 
-
 // Schedule TX every this many seconds (might become longer due to duty
 // cycle limitations).
-const unsigned TX_INTERVAL = 150;
+const unsigned TX_INTERVAL = 180; // Periode is about 4mn with Tx_interval 180s
 unsigned int LONG_SLEEP = 1800;
 
 // global enviromental parameters
@@ -131,8 +128,6 @@ void do_sleep_aware(unsigned int sleepyTime) {
             LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
               if ( digitalRead(PDPIN)) { // if a movement is detected, send an uplink and move back to normal mode
                waiting_presence = 0 ;
-               //pres [1] = 2;
-               //pres_it = 2;
                // Disable external pin interrupt on wake up pin.
               detachInterrupt(digitalPinToInterrupt(3)); 
                return;
@@ -154,7 +149,6 @@ void do_sleep_aware(unsigned int sleepyTime) {
 
 // sleep unleast an event happen
 void do_sleep(unsigned int sleepyTime) {
-  //unsigned int eights = sleepyTime / 8;
   unsigned int fours = sleepyTime / 4;
   unsigned int twos = (sleepyTime % 4)/ 2;
   unsigned int ones = ((sleepyTime % 4) % 2)/2;
@@ -190,15 +184,7 @@ void do_sleep(unsigned int sleepyTime) {
               timer0_overflow_count+= 8 * 64 * clockCyclesPerMicrosecond();
               sei();
           }
-//          for ( int x = 0; x < fours; x++) {
-//            // put the processor to sleep for 4 seconds
-//            LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF);
-//            // LMIC uses micros() to keep track of the duty cycle, so
-//              // hack timer0_overflow for a rude adjustment:
-//              cli();
-//              timer0_overflow_count+= 4 * 64 * clockCyclesPerMicrosecond();
-//              sei();
-//          }
+
           for ( int x = 0; x < twos; x++) {
             // put the processor to sleep for 2 seconds
             LowPower.powerDown(SLEEP_2S, ADC_OFF, BOD_OFF);
@@ -222,7 +208,6 @@ void do_sleep(unsigned int sleepyTime) {
           //Serial.begin(9600);
            digitalWrite(7, HIGH);
 }
-
 
 // ReadVcc function to read MCU Voltage
 long readVcc() {
@@ -248,7 +233,6 @@ int readLight() {
     lightsensor.getLux(0,1,data0,data1,result);  
             return result;
 }
-
 
 void onEvent (ev_t ev) {
     switch(ev) {
@@ -340,8 +324,7 @@ float pres_average(){
     for (int i = 1 ; i < pres_it ; i++)
     {
         somme += (int)pres[i] ; //somme des valeurs du tableau
-        if(pres[i]==1 && pres[i-1]==0) {trig++;} // count individual trig
-        
+        if(pres[i]==1 && pres[i-1]==0) {trig++;} // count individual trig       
     }
     nb_trig = trig;
     float pres_avg = (float)somme / ((float)(pres_it)) ; //valeur moyenne
@@ -353,16 +336,12 @@ float pres_average(){
 
 void do_send(osjob_t* j){
 
-  
     // Check if there is not a current TX/RX job running
     if (LMIC.opmode & OP_TXRXPEND) {
         //Serial.println(F("OP_TXRXPEND"));
     } 
     
     else {  
-
-      
-    
       if ( pres_average() == 0 ) {// calculate pres_avg
       
       waiting_presence++; // if no presence is detected, activate the waiting presence mode
@@ -370,18 +349,13 @@ void do_send(osjob_t* j){
       else {
       waiting_presence = 0; // if a presence is detected during the slot, start again the waiting presence counter
         }
-
-
     if(waiting_presence == 2){ // if no movement is detected on the second slot, do not send uplink and move to sleep aware mode
 
        #ifdef DEBUG_SLEEP
-        delay(5000);
-            
+        delay(5000);           
        #else
       do_sleep_aware(LONG_SLEEP-TX_INTERVAL); // go to sleep aware mode 
-
-      #endif
-          
+      #endif         
       }
       
     pres [pres_it] = digitalRead(PDPIN); // It is important to read the PIR Value before switching any output PIN due to noise sensitivity of the PIR
@@ -492,9 +466,6 @@ void setup() {
     // Set-up sensors
     lightsensor.begin();    
     lightsensor.setPowerUp();
-
-    //updateEnvParameters(); // To have value for the first Tx
-
        
     // LMIC init
     os_init();
@@ -508,7 +479,6 @@ void setup() {
     often 1% works well already. */
     
     LMIC_setClockError(MAX_CLOCK_ERROR * 2 / 100);
-
     
     // Set static session parameters. Instead of dynamically establishing a session
     // by joining the network, precomputed session parameters are be provided.
