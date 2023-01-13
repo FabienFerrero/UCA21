@@ -81,11 +81,10 @@ const unsigned TX_INTERVAL = 150;
 unsigned int LONG_SLEEP = 1800;
 
 // global enviromental parameters
- float batvalue;
+ //float batvalue;
  boolean presence;
- byte pres [128];
+ byte pres [64];
  unsigned int pres_it = 0; 
- float pres_avg = 0;
  int waiting_presence = 0; // This int is incremented if no presence is detected during a sensing slot
  boolean presence_detected = 0;
 
@@ -169,7 +168,7 @@ void do_sleep(unsigned int sleepyTime) {
 
              pres [pres_it] = digitalRead(PDPIN);
                     
-         if (pres_it < 127) {
+         if (pres_it < 63) {
             pres_it++;
                 }
           else { // The array is full, start again
@@ -330,6 +329,20 @@ void onEvent (ev_t ev) {
     }
 }
 
+float pres_average(){
+  
+    long somme = pres[pres_it-1];
+    for (int i = 1 ; i < pres_it ; i++)
+    {
+        somme += (int)pres[i] ; //somme des valeurs du tableau
+    }
+    
+    float pres_avg = (float)somme / ((float)(pres_it)) ; //valeur moyenne
+
+    return pres_avg;
+  
+  }
+
 
 void do_send(osjob_t* j){
 
@@ -340,9 +353,10 @@ void do_send(osjob_t* j){
     } 
     
     else {  
+
+      
     
-    
-      if ( pres_avg == 0 ) {
+      if ( pres_average() == 0 ) {// calculate pres_avg
       
       waiting_presence++; // if no presence is detected, activate the waiting presence mode
         }
@@ -364,15 +378,8 @@ void do_send(osjob_t* j){
       }
       
     pres [pres_it] = digitalRead(PDPIN); // It is important to read the PIR Value before switching any output PIN due to noise sensitivity of the PIR
-    pres_it++;
-     // Compute average from PIR SR-501
-   long somme = pres[pres_it-1];
-    for (int i = 1 ; i < pres_it ; i++)
-    {
-        somme += (int)pres[i] ; //somme des valeurs (db) du tableau
-    }
-    
-    pres_avg = (float)somme / ((float)(pres_it)) ; //valeur moyenne
+       
+    float pres_avg = pres_average();// calculate pres_avg
     pres_it = 0; // reset presence counter
 
     if (pres_avg > 0 ){ // Sense presence based on a sound detected or a PIR sense
