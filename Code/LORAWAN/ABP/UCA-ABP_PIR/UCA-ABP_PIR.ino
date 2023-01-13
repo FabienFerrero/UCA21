@@ -51,18 +51,18 @@ SHTC3 s(Wire);
 
 // LoRaWAN end-device address (DevAddr)
 
-static const u4_t DEVADDR = 0x260B9BE0;
+static const u4_t DEVADDR = 0x260BD6E0;
 
 // LoRaWAN NwkSKey, network session key
 // This is the default Semtech key, which is used by the early prototype TTN
 // network.
-static const PROGMEM u1_t NWKSKEY[16] = {  0xB8, 0x23, 0x6E, 0x33, 0xD8, 0x59, 0x9B, 0xE4, 0x7A, 0xF3, 0xAF, 0xD4, 0x14, 0xD4, 0x00, 0xC5 };
+static const PROGMEM u1_t NWKSKEY[16] = {  0xB8, 0x35, 0xE1, 0xC2, 0x0C, 0x12, 0xB0, 0x72, 0xE6, 0xCA, 0xA2, 0x01, 0x47, 0x85, 0x93, 0xE3 };
 
 
 // LoRaWAN AppSKey, application session key
 // This is the default Semtech key, which is used by the early prototype TTN
 // network.
-static const u1_t PROGMEM APPSKEY[16] = { 0xA9, 0xCF, 0xF8, 0xD9, 0x3F, 0xF5, 0xAB, 0xA3, 0x94, 0x99, 0x80, 0xB5, 0x8E, 0x8C, 0xAD, 0x61 };
+static const u1_t PROGMEM APPSKEY[16] = { 0xCC, 0xAA, 0x01, 0x19, 0xDC, 0xED, 0x70, 0x2C, 0x73, 0x10, 0x3B, 0x64, 0x23, 0xA7, 0x2E, 0x77 };
 
 
 // These callbacks are only used in over-the-air activation, so they are
@@ -81,9 +81,9 @@ const unsigned TX_INTERVAL = 150;
 unsigned int LONG_SLEEP = 1800;
 
 // global enviromental parameters
- //float batvalue;
+ int nb_trig;
  boolean presence;
- byte pres [64];
+ byte pres [128];
  unsigned int pres_it = 0; 
  int waiting_presence = 0; // This int is incremented if no presence is detected during a sensing slot
  boolean presence_detected = 0;
@@ -114,7 +114,7 @@ void addMillis(unsigned long extra_millis) {
 void do_sleep_aware(unsigned int sleepyTime) {
   unsigned int eights = sleepyTime / 8;
   
- attachInterrupt(digitalPinToInterrupt(3), wakeUp, CHANGE); // Interrupt is added on PIN to detect a movement
+ attachInterrupt(digitalPinToInterrupt(3), wakeUp, RISING); // Interrupt is added on PIN to detect a movement
  // if no presence detected for two slots, wait for 30mn or an event for next uplink
 
   #ifdef SHOW_DEBUGINFO
@@ -133,7 +133,7 @@ void do_sleep_aware(unsigned int sleepyTime) {
                //pres [1] = 2;
                //pres_it = 2;
                // Disable external pin interrupt on wake up pin.
-              detachInterrupt(1); 
+              detachInterrupt(digitalPinToInterrupt(3)); 
                return;
                   }
             
@@ -151,10 +151,12 @@ void do_sleep_aware(unsigned int sleepyTime) {
 
 // sleep unleast an event happen
 void do_sleep(unsigned int sleepyTime) {
-  unsigned int eights = sleepyTime / 8;
-  unsigned int fours = (sleepyTime % 8) / 4;
-  unsigned int twos = ((sleepyTime % 8) % 4) / 2;
-  unsigned int ones = ((sleepyTime % 8) % 4) % 2;
+  //unsigned int eights = sleepyTime / 8;
+  unsigned int fours = sleepyTime / 4;
+  unsigned int twos = (sleepyTime % 4)/ 2;
+  unsigned int ones = ((sleepyTime % 4) % 2)/2;
+
+   digitalWrite(7, LOW);
  
   #ifdef SHOW_DEBUGINFO
         Serial.print("Sleep during ");
@@ -164,38 +166,36 @@ void do_sleep(unsigned int sleepyTime) {
         Serial.end();
    #endif
         
-          for ( int x = 0; x < eights; x++) {
+          for ( int x = 0; x < fours; x++) {
+
+             // put the processor to sleep for 8 seconds             
+            LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF);
 
              pres [pres_it] = digitalRead(PDPIN);
                     
-         if (pres_it < 63) {
+         if (pres_it < 128) {
             pres_it++;
                 }
           else { // The array is full, start again
           pres_it = 0;
           pres [0] = pres [127];    
           }
-          
-          
-            // put the processor to sleep for 8 seconds
-            LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
-             
-            
+              
             // LMIC uses micros() to keep track of the duty cycle, so
               // hack timer0_overflow for a rude adjustment:
               cli();
               timer0_overflow_count+= 8 * 64 * clockCyclesPerMicrosecond();
               sei();
           }
-          for ( int x = 0; x < fours; x++) {
-            // put the processor to sleep for 4 seconds
-            LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF);
-            // LMIC uses micros() to keep track of the duty cycle, so
-              // hack timer0_overflow for a rude adjustment:
-              cli();
-              timer0_overflow_count+= 4 * 64 * clockCyclesPerMicrosecond();
-              sei();
-          }
+//          for ( int x = 0; x < fours; x++) {
+//            // put the processor to sleep for 4 seconds
+//            LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF);
+//            // LMIC uses micros() to keep track of the duty cycle, so
+//              // hack timer0_overflow for a rude adjustment:
+//              cli();
+//              timer0_overflow_count+= 4 * 64 * clockCyclesPerMicrosecond();
+//              sei();
+//          }
           for ( int x = 0; x < twos; x++) {
             // put the processor to sleep for 2 seconds
             LowPower.powerDown(SLEEP_2S, ADC_OFF, BOD_OFF);
@@ -216,7 +216,8 @@ void do_sleep(unsigned int sleepyTime) {
           }
           addMillis(sleepyTime * 1000);
 
-          Serial.begin(9600);
+          //Serial.begin(9600);
+           digitalWrite(7, HIGH);
 }
 
 
@@ -332,11 +333,14 @@ void onEvent (ev_t ev) {
 float pres_average(){
   
     long somme = pres[pres_it-1];
+    int trig=0;
     for (int i = 1 ; i < pres_it ; i++)
     {
         somme += (int)pres[i] ; //somme des valeurs du tableau
+        if(pres[i]==1 && pres[i-1]==0) {trig++;} // count individual trig
+        
     }
-    
+    nb_trig = trig;
     float pres_avg = (float)somme / ((float)(pres_it)) ; //valeur moyenne
 
     return pres_avg;
@@ -378,6 +382,14 @@ void do_send(osjob_t* j){
       }
       
     pres [pres_it] = digitalRead(PDPIN); // It is important to read the PIR Value before switching any output PIN due to noise sensitivity of the PIR
+    pres_it++;
+    if (pres_it < 128) {
+            pres_it++;
+                }
+          else { // The array is full, start again
+          pres_it = 0;
+          pres [0] = pres [127];    
+          }
        
     float pres_avg = pres_average();// calculate pres_avg
     pres_it = 0; // reset presence counter
@@ -397,8 +409,8 @@ void do_send(osjob_t* j){
     unsigned int l = (unsigned int)readLight(); // light sensor in 0.1 signed Lx
     boolean p = presence; // Presence indicator
     int p_avg = (int) 10000 * pres_avg; // Cayenne analog output is 0.01 Signed and PIR sensor will be in %
-
-        boolean p_d= presence_detected; // Sound indicator
+    boolean p_d= presence_detected; // Sound indicator
+    int pt = 100*nb_trig;
 
     #ifdef SHOW_DEBUGINFO
   // print out the value you read:
@@ -416,7 +428,7 @@ void do_send(osjob_t* j){
   #endif 
 
  // Build packet              
-            unsigned char mydata[22];
+            unsigned char mydata[26];
             mydata[0] = 0x1; // CH1
             mydata[1] = 0x67; // Temp
             mydata[2] = t >> 8;
@@ -439,6 +451,10 @@ void do_send(osjob_t* j){
             mydata[19] = 0x6;
             mydata[20] = 0x0;
             mydata[21] = p_d;
+            mydata[22] = 0x7;
+            mydata[23] = 0x2;
+            mydata[24] = pt>> 8;
+            mydata[25] = pt & 0xFF;
             
             LMIC_setTxData2(1, mydata, sizeof(mydata), 0);
       
@@ -450,9 +466,12 @@ void setup() {
 
     pinMode(13, OUTPUT);
     digitalWrite(13, HIGH); // Blink  
-    delay(1000); //Wait 1s in order to avoid UART programmer issues when a battery is used
+    delay(500); //Wait 1s in order to avoid UART programmer issues when a battery is used
     digitalWrite(13, LOW); // Blink
-    delay(1000); //Wait 1s in order to avoid UART programmer issues when a battery is used 
+    delay(500); //Wait 1s in order to avoid UART programmer issues when a battery is used 
+
+    pinMode(7, OUTPUT);
+    digitalWrite(7, HIGH);
    
     #ifdef SHOW_DEBUGINFO
     Serial.begin(115200);
@@ -462,6 +481,8 @@ void setup() {
       
     Wire.begin();
     pinMode(PDPIN, INPUT);
+    pres [pres_it] = digitalRead(PDPIN); // 
+    pres_it++;
        
     s.begin(true);
     
