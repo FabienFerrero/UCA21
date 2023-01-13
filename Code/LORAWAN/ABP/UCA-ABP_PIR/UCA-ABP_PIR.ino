@@ -51,18 +51,18 @@ SHTC3 s(Wire);
 
 // LoRaWAN end-device address (DevAddr)
 
-static const u4_t DEVADDR = 0x00000000;
+static const u4_t DEVADDR = 0x260B9BE0;
 
 // LoRaWAN NwkSKey, network session key
 // This is the default Semtech key, which is used by the early prototype TTN
 // network.
-static const PROGMEM u1_t NWKSKEY[16] = {  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+static const PROGMEM u1_t NWKSKEY[16] = {  0xB8, 0x23, 0x6E, 0x33, 0xD8, 0x59, 0x9B, 0xE4, 0x7A, 0xF3, 0xAF, 0xD4, 0x14, 0xD4, 0x00, 0xC5 };
 
 
 // LoRaWAN AppSKey, application session key
 // This is the default Semtech key, which is used by the early prototype TTN
 // network.
-static const u1_t PROGMEM APPSKEY[16] = {  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+static const u1_t PROGMEM APPSKEY[16] = { 0xA9, 0xCF, 0xF8, 0xD9, 0x3F, 0xF5, 0xAB, 0xA3, 0x94, 0x99, 0x80, 0xB5, 0x8E, 0x8C, 0xAD, 0x61 };
 
 
 // These callbacks are only used in over-the-air activation, so they are
@@ -77,7 +77,7 @@ static osjob_t sendjob;
 
 // Schedule TX every this many seconds (might become longer due to duty
 // cycle limitations).
-const unsigned TX_INTERVAL = 300;
+const unsigned TX_INTERVAL = 150;
 unsigned int LONG_SLEEP = 1800;
 
 // global enviromental parameters
@@ -115,7 +115,7 @@ void addMillis(unsigned long extra_millis) {
 void do_sleep_aware(unsigned int sleepyTime) {
   unsigned int eights = sleepyTime / 8;
   
- attachInterrupt(digitalPinToInterrupt(3), wakeUp, FALLING); // Interrupt is added on PIN to detect a movement
+ attachInterrupt(digitalPinToInterrupt(3), wakeUp, CHANGE); // Interrupt is added on PIN to detect a movement
  // if no presence detected for two slots, wait for 30mn or an event for next uplink
 
   #ifdef SHOW_DEBUGINFO
@@ -131,8 +131,8 @@ void do_sleep_aware(unsigned int sleepyTime) {
             LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
               if ( digitalRead(PDPIN)) { // if a movement is detected, send an uplink and move back to normal mode
                waiting_presence = 0 ;
-               pres [1] = 2;
-               pres_it = 2;
+               //pres [1] = 2;
+               //pres_it = 2;
                // Disable external pin interrupt on wake up pin.
               detachInterrupt(1); 
                return;
@@ -372,7 +372,7 @@ void do_send(osjob_t* j){
         somme += (int)pres[i] ; //somme des valeurs (db) du tableau
     }
     
-    pres_avg = (float)somme / ((float)(pres_it+1)) ; //valeur moyenne
+    pres_avg = (float)somme / ((float)(pres_it)) ; //valeur moyenne
     pres_it = 0; // reset presence counter
 
     if (pres_avg > 0 ){ // Sense presence based on a sound detected or a PIR sense
@@ -385,7 +385,7 @@ void do_send(osjob_t* j){
 
     s.begin(true);
     int t = (int)(s.readTempC()*10);
-    int h = (int)(s.readHumidity()*4);
+    int h = (int)(s.readHumidity()*2);
     int bat = (int)(readVcc()/10); // Cayenne analog output is 0.01 Signed
     unsigned int l = (unsigned int)readLight(); // light sensor in 0.1 signed Lx
     boolean p = presence; // Presence indicator
@@ -405,8 +405,6 @@ void do_send(osjob_t* j){
   Serial.println(bat);
   Serial.print("Average Presence : ");
   Serial.println(p_avg);
-  Serial.print("Average Sound : ");
-  Serial.println(s_avg);
   delay(100);
   #endif 
 
