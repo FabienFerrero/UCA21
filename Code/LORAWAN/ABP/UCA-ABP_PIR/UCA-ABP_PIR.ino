@@ -113,6 +113,7 @@ void addMillis(unsigned long extra_millis) {
 // sleep unleast an event happen
 void do_sleep_aware(unsigned int sleepyTime) {
   unsigned int eights = sleepyTime / 8;
+  digitalWrite(7, LOW);
   
  attachInterrupt(digitalPinToInterrupt(3), wakeUp, RISING); // Interrupt is added on PIN to detect a movement
  // if no presence detected for two slots, wait for 30mn or an event for next uplink
@@ -144,7 +145,9 @@ void do_sleep_aware(unsigned int sleepyTime) {
               sei();
           }         
 
- #ifdef SHOW_DEBUGINFO
+          digitalWrite(7, HIGH);
+          
+          #ifdef SHOW_DEBUGINFO
           Serial.begin(9600);
           #endif
 }
