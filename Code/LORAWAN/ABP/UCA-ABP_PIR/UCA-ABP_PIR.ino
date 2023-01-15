@@ -49,18 +49,18 @@ SHTC3 s(Wire);
 
 // LoRaWAN end-device address (DevAddr)
 
-static const u4_t DEVADDR = 0x260BD6E0;
+static const u4_t DEVADDR = 0x00000000;
 
 // LoRaWAN NwkSKey, network session key
 // This is the default Semtech key, which is used by the early prototype TTN
 // network.
-static const PROGMEM u1_t NWKSKEY[16] = {  0xB8, 0x35, 0xE1, 0xC2, 0x0C, 0x12, 0xB0, 0x72, 0xE6, 0xCA, 0xA2, 0x01, 0x47, 0x85, 0x93, 0xE3 };
+static const PROGMEM u1_t NWKSKEY[16] = {  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 
 // LoRaWAN AppSKey, application session key
 // This is the default Semtech key, which is used by the early prototype TTN
 // network.
-static const u1_t PROGMEM APPSKEY[16] = { 0xCC, 0xAA, 0x01, 0x19, 0xDC, 0xED, 0x70, 0x2C, 0x73, 0x10, 0x3B, 0x64, 0x23, 0xA7, 0x2E, 0x77 };
+static const u1_t PROGMEM APPSKEY[16] = {  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
 
 // These callbacks are only used in over-the-air activation, so they are
@@ -153,8 +153,7 @@ void do_sleep(unsigned int sleepyTime) {
   unsigned int twos = (sleepyTime % 4)/ 2;
   unsigned int ones = ((sleepyTime % 4) % 2)/2;
 
-   digitalWrite(7, LOW);
- 
+    
   #ifdef SHOW_DEBUGINFO
         Serial.print("Sleep during ");
         Serial.print(sleepyTime);
@@ -165,9 +164,6 @@ void do_sleep(unsigned int sleepyTime) {
         
           for ( int x = 0; x < fours; x++) {
 
-             // put the processor to sleep for 8 seconds             
-            LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF);
-
              pres [pres_it] = digitalRead(PDPIN);
                     
          if (pres_it < 128) {
@@ -177,6 +173,11 @@ void do_sleep(unsigned int sleepyTime) {
           pres_it = 0;
           pres [0] = pres [127];    
           }
+
+             // put the processor to sleep for 8 seconds             
+            LowPower.powerDown(SLEEP_4S, ADC_OFF, BOD_OFF);
+
+            
               
             // LMIC uses micros() to keep track of the duty cycle, so
               // hack timer0_overflow for a rude adjustment:
@@ -205,8 +206,8 @@ void do_sleep(unsigned int sleepyTime) {
           }
           addMillis(sleepyTime * 1000);
 
-          //Serial.begin(9600);
-           digitalWrite(7, HIGH);
+          
+          
 }
 
 // ReadVcc function to read MCU Voltage
@@ -319,8 +320,8 @@ void onEvent (ev_t ev) {
 
 float pres_average(){
   
-    long somme = pres[pres_it-1];
-    int trig=0;
+    long somme = pres[0];
+    int trig=(int)pres[0];
     for (int i = 1 ; i < pres_it ; i++)
     {
         somme += (int)pres[i] ; //somme des valeurs du tableau
@@ -447,9 +448,7 @@ void setup() {
     digitalWrite(13, LOW); // Blink
     delay(500); //Wait 1s in order to avoid UART programmer issues when a battery is used 
 
-    pinMode(7, OUTPUT);
-    digitalWrite(7, HIGH);
-   
+      
     #ifdef SHOW_DEBUGINFO
     Serial.begin(115200);
     Serial.println("Starting");
